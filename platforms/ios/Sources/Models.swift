@@ -2,7 +2,7 @@ import Foundation
 import Combine
 
 enum RecordKind: String, Codable, CaseIterable, Hashable {
-    case account, transaction, transfer, budget, item, project, task, goal, contribution, stock, quote, recurring
+    case account, transaction, transfer, budget, item, project, task, goal, contribution, stock, quote, recurring, installment
 }
 
 struct MoneyRecord: Codable, Identifiable, Equatable {
@@ -24,6 +24,11 @@ struct MoneyRecord: Codable, Identifiable, Equatable {
     var alertInside: Bool? = nil
     var alertConfiguredAt: Date? = nil
     var source: String? = nil
+    var exchange: String? = nil
+    var securityType: String? = nil
+    var rateCents: Int64? = nil
+    var downPaymentCents: Int64? = nil
+    var installmentIndex: Int? = nil
 }
 
 enum MoneyError: LocalizedError {
@@ -92,6 +97,7 @@ enum Money {
             guard let id = record.accountID, items(.account).contains(where: { $0.id == id }) else { throw MoneyError.missingAccount }
             guard record.amount != 0 else { throw MoneyError.invalidAmount }
         }
+        if record.kind == .installment { _ = try Installments.schedule(record) }
         if record.kind == .quote && record.amount <= 0 { throw MoneyError.invalidAmount }
         let requiredParent: RecordKind? = record.kind == .item ? .budget : record.kind == .task ? .project : record.kind == .contribution ? .goal : record.kind == .quote ? .stock : nil
         if let requiredParent {
@@ -140,6 +146,13 @@ enum Money {
             return result + max(0, item.amount * item.quantity - itemPaid)
         }
         return (paid, open, budget.amount - paid - open)
+    }
+    func payInstallment(_ purchase: MoneyRecord, index: Int, accountID: UUID, date: Date) throws {
+        guard let current = records.first(where: { $0.id == purchase.id && $0.kind == .installment }),
+              let due = try Installments.schedule(current).first(where: { $0.index == index }),
+              items(.account).contains(where: { $0.id == accountID }) else { throw MoneyError.invalidAmount }
+        if records.contains(where: { $0.kind == .transaction && $0.parentID == purchase.id && $0.installmentIndex == index }) { return }
+        try save(MoneyRecord(kind: .transaction, name: purchase.name + " · " + (index == 0 ? "Anzahlung" : "Rate " + String(index)), amount: -due.amount, parentID: purchase.id, accountID: accountID, date: date, installmentIndex: index))
     }
     func setAlert(_ id: UUID, target: Int64, below: Bool, enabled: Bool) throws {
         guard var stock = records.first(where: { $0.id == id && $0.kind == .stock }), target > 0 || !enabled else { throw MoneyError.invalidAmount }

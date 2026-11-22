@@ -6,7 +6,13 @@ import SwiftUI
     var body: some Scene {
         WindowGroup {
             MainView().environmentObject(store)
-                .task { StockAlerts.shared.configure(); await StockAlerts.shared.evaluate(store) }
+                .task {
+                    StockAlerts.shared.configure(); await StockAlerts.shared.evaluate(store)
+                    while !Task.isCancelled {
+                        await StockAlerts.shared.refreshEnabled(store)
+                        do { try await Task.sleep(for: .seconds(300)) } catch { break }
+                    }
+                }
                 .onChange(of: store.records) { _, _ in Task { await StockAlerts.shared.evaluate(store) } }
                 .onChange(of: scenePhase) { _, phase in
                     if phase == .background { StockAlerts.shared.schedule(store) }
@@ -16,7 +22,7 @@ import SwiftUI
                     Button("OK") { store.error = nil }
                 } message: { Text(store.error ?? "") }
         }.backgroundTask(.appRefresh(StockAlerts.taskID)) {
-            await StockAlerts.shared.refreshEnabled(store)
+            await StockAlerts.shared.refreshEnabled(store, onlyAlerts: true)
             await StockAlerts.shared.schedule(store)
         }
     }

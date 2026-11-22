@@ -63,12 +63,34 @@ enum QuoteClient {
         guard value > 0 else { throw QuoteFailure.unavailable }
         return MoneyRecord(kind: .quote, name: stock.name, amount: value, parentID: stock.id, currency: stock.currency, date: Date(timeIntervalSince1970: timestamp), source: "Twelve Data")
     }
+    struct Suggestion: Decodable, Identifiable {
+        let symbol: String
+        let instrument_name: String
+        let exchange: String
+        let currency: String
+        let instrument_type: String
+        var id: String { symbol + ":" + exchange + ":" + currency }
+    }
+    static func search(_ query: String) async throws -> [Suggestion] {
+        struct SearchReply: Decodable { let data: [Suggestion]? }
+        guard !QuoteKey.read().isEmpty else { return [] }
+        var url = URLComponents(string: "https://api.twelvedata.com/symbol_search")!
+        url.queryItems = [URLQueryItem(name: "symbol", value: query), URLQueryItem(name: "outputsize", value: "12"), URLQueryItem(name: "apikey", value: QuoteKey.read())]
+        var request = URLRequest(url: url.url!); request.timeoutInterval = 12
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw QuoteFailure.unavailable }
+        let reply = try JSONDecoder().decode(SearchReply.self, from: data)
+        guard let values = reply.data else { throw QuoteFailure.unavailable }
+        var seen = Set<String>()
+        return values.filter { ["Common Stock", "ETF", "REIT", "Depositary Receipt"].contains($0.instrument_type) && ["EUR", "USD", "GBP", "CHF"].contains($0.currency) && seen.insert($0.id).inserted }
+    }
     static func fetch(_ stock: MoneyRecord) async throws -> MoneyRecord {
         let key = QuoteKey.read()
         guard !key.isEmpty else { throw QuoteFailure.unavailable }
         var url = URLComponents(string: "https://api.twelvedata.com/quote")!
         url.queryItems = [URLQueryItem(name: "symbol", value: stock.symbol), URLQueryItem(name: "apikey", value: key)]
         var request = URLRequest(url: url.url!)
+        if let exchange = stock.exchange, !exchange.isEmpty { url.queryItems?.append(URLQueryItem(name: "exchange", value: exchange)); request.url = url.url }
         request.timeoutInterval = 20
         request.cachePolicy = .reloadIgnoringLocalCacheData
         let (data, response) = try await URLSession.shared.data(for: request)
@@ -122,9 +144,9 @@ enum QuoteClient {
         if latest == nil || quote.date > latest!.date { try store.save(quote) }
         await evaluate(store)
     }
-    func refreshEnabled(_ store: MoneyStore) async {
+    func refreshEnabled(_ store: MoneyStore, onlyAlerts: Bool = false) async {
         guard !QuoteKey.read().isEmpty else { return }
-        for stock in store.items(.stock) where stock.alertsEnabled == true {
+        for stock in store.items(.stock) where !onlyAlerts || stock.alertsEnabled == true {
             guard !Task.isCancelled else { break }
             do { try await refresh(stock, store: store) }
             catch { if !Task.isCancelled { store.error = QuoteFailure.unavailable.localizedDescription }; break }

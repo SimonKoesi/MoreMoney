@@ -107,4 +107,25 @@ final class MoneyTests: XCTestCase {
         try restored.setAlert(stock.id, target: 12_345_678, below: true, enabled: false)
         XCTAssertFalse(AlertRule.shouldNotify(try XCTUnwrap(restored.items(.stock).first), quote: quote))
     }
+    @MainActor func testInstallmentScheduleAndIdempotentPayment() async throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let store = MoneyStore(url: folder.appendingPathComponent("store.json"))
+        let account = MoneyRecord(kind: .account, name: "Konto", amount: 100000)
+        try store.save(account)
+        let purchase = MoneyRecord(kind: .installment, name: "Eigener Kauf", amount: 100001, date: ISO8601DateFormatter().date(from: "2026-01-31T12:00:00Z")!, rateCents: 30000, downPaymentCents: 10000)
+        try store.save(purchase)
+        let due = try Installments.schedule(purchase)
+        XCTAssertEqual(due.map(\.amount), [10000, 30000, 30000, 30000, 1])
+        XCTAssertEqual(due.reduce(Int64(0)) { $0 + $1.amount }, purchase.amount)
+        XCTAssertTrue(ISO8601DateFormatter().string(from: due[2].date).hasPrefix("2026-02-28"))
+        XCTAssertTrue(ISO8601DateFormatter().string(from: due[3].date).hasPrefix("2026-03-31"))
+        XCTAssertTrue(store.items(.transaction).isEmpty)
+        try store.payInstallment(purchase, index: 1, accountID: account.id, date: Date())
+        try store.payInstallment(purchase, index: 1, accountID: account.id, date: Date())
+        XCTAssertEqual(store.items(.transaction).count, 1)
+        XCTAssertEqual(store.totalBalance, 70000)
+        XCTAssertThrowsError(try store.remove(purchase))
+        XCTAssertThrowsError(try store.payInstallment(purchase, index: 99, accountID: account.id, date: Date()))
+    }
 }

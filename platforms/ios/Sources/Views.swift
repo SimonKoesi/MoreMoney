@@ -258,6 +258,10 @@ struct RecordEditor: View {
     @State private var income = false
     @State private var symbol = ""
     @State private var currency = "EUR"
+    @State private var exchange = ""
+    @State private var securityType = ""
+    @State private var suggestions: [QuoteClient.Suggestion] = []
+    @State private var selectedName = ""
     @State private var note = ""
     @State private var quantity = 1
     @State private var date = Date()
@@ -268,6 +272,19 @@ struct RecordEditor: View {
         NavigationStack {
             Form {
                 TextField("Name", text: $name, axis: .vertical).lineLimit(1...5).accessibilityIdentifier("record-name")
+                if kind == .stock && symbol.isEmpty && QuoteKey.read().isEmpty { Text("Namenssuche: eigenen Twelve-Data-Schlüssel unter Mehr hinterlegen.").font(.footnote) }
+                if kind == .stock {
+                    ForEach(suggestions) { suggestion in
+                        Button {
+                            selectedName = suggestion.instrument_name; name = suggestion.instrument_name
+                            symbol = suggestion.symbol; currency = suggestion.currency
+                            exchange = suggestion.exchange; securityType = suggestion.instrument_type
+                            suggestions = []
+                        } label: {
+                            VStack(alignment: .leading) { Text(suggestion.instrument_name); Text(suggestion.symbol + " · " + suggestion.exchange + " · " + suggestion.instrument_type).font(.caption).foregroundStyle(.secondary) }
+                        }
+                    }
+                }
                 if needsAmount { TextField(kind == .stock ? "Zielkurs · optional" : kind == .quote ? "Kurs" : "Betrag in EUR", text: $amount).keyboardType(.decimalPad).accessibilityIdentifier("record-amount") }
                 if kind == .transaction {
                     Toggle("Einnahme", isOn: $income)
@@ -287,6 +304,14 @@ struct RecordEditor: View {
                     ToolbarItem(placement: .confirmationAction) { Button("Speichern") { save() }.disabled(saving).accessibilityIdentifier("save-record") }
                 }
                 .onAppear { name = defaultName; account = store.items(.account).first?.id }
+                .task(id: name) {
+                    guard kind == .stock, name != selectedName, name.trimmingCharacters(in: .whitespaces).count >= 2 else { suggestions = []; return }
+                    do {
+                        try await Task.sleep(for: .milliseconds(350))
+                        let matches = try await QuoteClient.search(name)
+                        try Task.checkCancellation(); suggestions = matches
+                    } catch is CancellationError { } catch { suggestions = []; self.error = "Suche nicht verfügbar. Erneut tippen oder Symbol manuell eingeben." }
+                }
         }
     }
     private func save() {
@@ -298,8 +323,11 @@ struct RecordEditor: View {
             if kind != .account && value < 0 { throw MoneyError.invalidAmount }
             if kind == .transaction { guard value > 0 else { throw MoneyError.invalidAmount }; if !income { value = -value } }
             if kind == .stock && symbol.trimmingCharacters(in: .whitespaces).isEmpty { throw MoneyError.missingName }
-            let record = MoneyRecord(kind: kind, name: name, amount: value, parentID: parent, accountID: kind == .transaction ? account : nil, quantity: Int64(quantity), note: note, symbol: symbol.uppercased(), currency: currency, date: date)
+            let record = MoneyRecord(kind: kind, name: name, amount: value, parentID: parent, accountID: kind == .transaction ? account : nil, quantity: Int64(quantity), note: note, symbol: symbol.uppercased(), currency: currency, date: date, exchange: kind == .stock ? exchange : nil, securityType: kind == .stock ? securityType : nil)
             try store.save(record)
+            if kind == .stock && !QuoteKey.read().isEmpty {
+                Task { do { try await StockAlerts.shared.refresh(record, store: store) } catch { store.error = QuoteFailure.unavailable.localizedDescription } }
+            }
             dismiss()
         } catch { self.error = error.localizedDescription }
         saving = false
@@ -344,6 +372,7 @@ struct SettingsView: View {
     @State private var keyMessage = ""
     var body: some View {
         Form {
+            NavigationLink("Ratenkäufe") { InstallmentList() }
             Section { Label("Lokal auf diesem Gerät", systemImage: "lock.shield"); Text("MoreMoney 0.5").foregroundStyle(.secondary) }
             Section("Aktienkurse · Twelve Data") {
                 SecureField("Eigener API-Schlüssel", text: $key).textInputAutocapitalization(.never).autocorrectionDisabled()
