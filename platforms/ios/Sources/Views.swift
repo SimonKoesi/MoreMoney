@@ -161,21 +161,88 @@ struct StockDetail: View {
     @EnvironmentObject private var store: MoneyStore
     let stock: MoneyRecord
     @State private var add = false
+    @State private var alertEditor = false
+    @State private var refreshing = false
+    @State private var error = ""
+    private var current: MoneyRecord { store.items(.stock).first(where: { $0.id == stock.id }) ?? stock }
     private var quotes: [MoneyRecord] { store.items(.quote, parent: stock.id).sorted { $0.date < $1.date } }
     var body: some View {
         List {
             if let latest = quotes.last {
-                AmountRow(label: "Manuell · " + latest.date.formatted(date: .numeric, time: .omitted), amount: latest.amount, currency: stock.currency, decimals: 6)
-                if stock.amount > 0 { AmountRow(label: "Zielkurs", amount: stock.amount, currency: stock.currency, decimals: 6) }
+                AmountRow(label: (latest.source ?? "Manuell") + " · " + latest.date.formatted(), amount: latest.amount, currency: stock.currency, decimals: 6)
+            }
+            if current.amount > 0 { AmountRow(label: "Zielkurs", amount: current.amount, currency: stock.currency, decimals: 6) }
+            Section {
+                Button { alertEditor = true } label: { Label(current.alertsEnabled == true ? "Kursalarm bearbeiten" : "Kursalarm einrichten", systemImage: current.alertsEnabled == true ? "bell.badge" : "bell") }
+                if !QuoteKey.read().isEmpty {
+                    Button(refreshing ? "Wird aktualisiert …" : "Kurs aktualisieren") {
+                        refreshing = true; error = ""
+                        Task {
+                            do { try await StockAlerts.shared.refresh(current, store: store) }
+                            catch { self.error = QuoteFailure.unavailable.localizedDescription }
+                            refreshing = false
+                        }
+                    }.disabled(refreshing)
+                }
+                if !error.isEmpty { Text(error).foregroundStyle(.red) }
             }
             if quotes.count > 1 {
                 Chart(quotes) { quote in LineMark(x: .value("Datum", quote.date), y: .value(stock.currency, Double(quote.amount) / 1_000_000)) }.frame(minHeight: 180).accessibilityLabel("Gespeicherter Kursverlauf")
             }
             if !stock.note.isEmpty { Text(stock.note).fixedSize(horizontal: false, vertical: true) }
-            ForEach(quotes.reversed()) { quote in AmountRow(label: quote.date.formatted(date: .numeric, time: .omitted), amount: quote.amount, currency: stock.currency, decimals: 6) }
+            ForEach(quotes.reversed()) { quote in AmountRow(label: quote.date.formatted(), amount: quote.amount, currency: stock.currency, decimals: 6) }
         }.navigationTitle(stock.name).navigationBarTitleDisplayMode(.inline)
             .toolbar { Button { add = true } label: { Image(systemName: "plus") }.accessibilityLabel("Kurs erfassen") }
             .sheet(isPresented: $add) { RecordEditor(kind: .quote, parent: stock.id, defaultName: stock.name) }
+            .sheet(isPresented: $alertEditor) { AlertEditor(stock: current) }
+    }
+}
+
+struct AlertEditor: View {
+    @EnvironmentObject private var store: MoneyStore
+    @Environment(\.dismiss) private var dismiss
+    let stock: MoneyRecord
+    @State private var enabled = false
+    @State private var below = false
+    @State private var target = ""
+    @State private var saving = false
+    @State private var error = ""
+    var body: some View {
+        NavigationStack {
+            Form {
+                Toggle("Benachrichtigung", isOn: $enabled)
+                TextField("Zielkurs in " + stock.currency, text: $target).keyboardType(.decimalPad).accessibilityIdentifier("alert-target")
+                Picker("Auslösen", selection: $below) { Text("Ab Zielkurs").tag(false); Text("Bis Zielkurs").tag(true) }
+                Section {
+                    Text("Nach neuen Kursen. Hintergrundabrufe sind von iOS abhängig; keine dauerhafte Überwachung.").font(.footnote)
+                    if QuoteKey.read().isEmpty { Text("Automatisch: Twelve-Data-Schlüssel unter Mehr hinterlegen.").font(.footnote) }
+                    if !error.isEmpty { Text(error).foregroundStyle(.red) }
+                }
+            }.navigationTitle("Kursalarm").navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) { Button("Abbrechen") { dismiss() }.disabled(saving) }
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Speichern") {
+                            guard !saving else { return }; saving = true
+                            Task {
+                                do {
+                                    let value = try (target.isEmpty && !enabled ? stock.amount : Money.parse(target, decimals: 6))
+                                    guard value > 0 || !enabled else { throw MoneyError.invalidAmount }
+                                    if enabled { try await StockAlerts.shared.permission() }
+                                    try store.setAlert(stock.id, target: value, below: below, enabled: enabled)
+                                    StockAlerts.shared.schedule(store)
+                                    dismiss()
+                                } catch { self.error = error.localizedDescription }
+                                saving = false
+                            }
+                        }.disabled(saving)
+                    }
+                }
+                .onAppear {
+                    enabled = stock.alertsEnabled == true; below = stock.alertBelow == true
+                    if stock.amount > 0 { target = NSDecimalNumber(value: stock.amount).dividing(by: NSDecimalNumber(value: 1_000_000)).stringValue }
+                }
+        }
     }
 }
 
@@ -273,9 +340,24 @@ struct SettingsView: View {
     @EnvironmentObject private var store: MoneyStore
     @State private var exporting = false
     @State private var document: BackupDocument? = nil
+    @State private var key = ""
+    @State private var keyMessage = ""
     var body: some View {
         Form {
             Section { Label("Lokal auf diesem Gerät", systemImage: "lock.shield"); Text("MoreMoney 0.5").foregroundStyle(.secondary) }
+            Section("Aktienkurse · Twelve Data") {
+                SecureField("Eigener API-Schlüssel", text: $key).textInputAutocapitalization(.never).autocorrectionDisabled()
+                Button("Schlüssel speichern") {
+                    do { try QuoteKey.save(key); key = ""; keyMessage = "Sicher gespeichert"; StockAlerts.shared.schedule(store) }
+                    catch { keyMessage = error.localizedDescription }
+                }.disabled(key.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                Button("Schlüssel entfernen", role: .destructive) {
+                    do { try QuoteKey.save(""); key = ""; keyMessage = "Entfernt"; StockAlerts.shared.schedule(store) }
+                    catch { keyMessage = error.localizedDescription }
+                }
+                Text("Nur Symbol und Zugang gehen an Twelve Data. Kurse und Limits hängen vom eigenen Tarif ab.").font(.footnote)
+                if !keyMessage.isEmpty { Text(keyMessage).font(.footnote) }
+            }
             Button("Backup exportieren") { do { document = BackupDocument(data: try store.backup()); exporting = true } catch { store.error = error.localizedDescription } }
         }.navigationTitle("Mehr")
             .fileExporter(isPresented: $exporting, document: document, contentType: .json, defaultFilename: "MoreMoney-Backup") { result in if case .failure(let error) = result { store.error = error.localizedDescription } }

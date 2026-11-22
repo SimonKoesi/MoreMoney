@@ -14,6 +14,11 @@ targets:
     type: application
     platform: iOS
     sources: [Sources, Resources]
+    info:
+      path: Info.plist
+      properties:
+        BGTaskSchedulerPermittedIdentifiers: [de.moremoney.quote-refresh]
+        UIBackgroundModes: [fetch]
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: de.moremoney.ios

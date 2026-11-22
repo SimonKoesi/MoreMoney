@@ -19,6 +19,11 @@ struct MoneyRecord: Codable, Identifiable, Equatable {
     var symbol = ""
     var currency = "EUR"
     var date = Date()
+    var alertsEnabled: Bool? = nil
+    var alertBelow: Bool? = nil
+    var alertInside: Bool? = nil
+    var alertConfiguredAt: Date? = nil
+    var source: String? = nil
 }
 
 enum MoneyError: LocalizedError {
@@ -118,7 +123,7 @@ enum Money {
         guard readable else { throw MoneyError.corruptStore }
         try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
         let data = try JSONEncoder().encode(next)
-        try data.write(to: url, options: [.atomic, .completeFileProtection])
+        try data.write(to: url, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
         records = next
     }
     func balance(_ account: MoneyRecord) -> Int64 {
@@ -135,6 +140,20 @@ enum Money {
             return result + max(0, item.amount * item.quantity - itemPaid)
         }
         return (paid, open, budget.amount - paid - open)
+    }
+    func setAlert(_ id: UUID, target: Int64, below: Bool, enabled: Bool) throws {
+        guard var stock = records.first(where: { $0.id == id && $0.kind == .stock }), target > 0 || !enabled else { throw MoneyError.invalidAmount }
+        stock.amount = target
+        stock.alertsEnabled = enabled
+        stock.alertBelow = below
+        stock.alertInside = false
+        stock.alertConfiguredAt = Date()
+        try save(stock)
+    }
+    func markAlert(_ id: UUID, inside: Bool) throws {
+        guard var stock = records.first(where: { $0.id == id && $0.kind == .stock }) else { return }
+        stock.alertInside = inside
+        try save(stock)
     }
     func backup() throws -> Data { try JSONEncoder().encode(records) }
 }

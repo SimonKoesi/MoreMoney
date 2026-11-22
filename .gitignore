@@ -15,3 +15,13 @@ playwright-report/
 test-results/
 *.tsbuildinfo
 .codex-standards-backup/
+platforms/ios/*.xcodeproj/
+platforms/ios/*.xcworkspace/
+build/ios/
+build/ios-tests/
+build/*.xcresult/
+*.ipa
+*.mobileprovision
+*.p12
+
+platforms/ios/Info.plist
