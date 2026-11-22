@@ -52,13 +52,14 @@ enum QuoteKey {
 }
 
 enum QuoteClient {
-    struct Reply: Decodable { var close: String?; var currency: String?; var timestamp: Double?; var symbol: String? }
+    struct Reply: Decodable { var close: String?; var currency: String?; var timestamp: Double?; var symbol: String?; var exchange: String? }
     static func parse(_ data: Data, stock: MoneyRecord, now: Date = Date()) throws -> MoneyRecord {
         let reply = try JSONDecoder().decode(Reply.self, from: data)
         guard reply.currency == stock.currency else { throw QuoteFailure.currency }
         guard reply.symbol?.uppercased() == stock.symbol.uppercased(), let price = reply.close,
               let timestamp = reply.timestamp, timestamp.isFinite,
               timestamp > 0, timestamp <= now.timeIntervalSince1970 + 60 else { throw QuoteFailure.unavailable }
+        if let exchange = stock.exchange, !exchange.isEmpty, reply.exchange?.uppercased() != exchange.uppercased() { throw QuoteFailure.unavailable }
         let value = try Money.parse(price, decimals: 6)
         guard value > 0 else { throw QuoteFailure.unavailable }
         return MoneyRecord(kind: .quote, name: stock.name, amount: value, parentID: stock.id, currency: stock.currency, date: Date(timeIntervalSince1970: timestamp), source: "Twelve Data")
@@ -104,6 +105,7 @@ enum QuoteClient {
     static let taskID = "de.moremoney.quote-refresh"
     private var checking = false
     private var fetching = Set<UUID>()
+    private var lastAutomatic: [UUID: Date] = [:]
     func configure() { UNUserNotificationCenter.current().delegate = self }
     func permission() async throws {
         guard try await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) else { throw QuoteFailure.permission }
@@ -148,8 +150,12 @@ enum QuoteClient {
         guard !QuoteKey.read().isEmpty else { return }
         for stock in store.items(.stock) where !onlyAlerts || stock.alertsEnabled == true {
             guard !Task.isCancelled else { break }
-            do { try await refresh(stock, store: store) }
-            catch { if !Task.isCancelled { store.error = QuoteFailure.unavailable.localizedDescription }; break }
+            if Date().timeIntervalSince(lastAutomatic[stock.id] ?? .distantPast) < 300 { continue }
+            lastAutomatic[stock.id] = Date()
+            do {
+                try await refresh(stock, store: store)
+                try await Task.sleep(for: .seconds(10))
+            } catch { if !Task.isCancelled { store.error = QuoteFailure.unavailable.localizedDescription }; break }
         }
     }
     func schedule(_ store: MoneyStore) {

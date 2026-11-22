@@ -105,4 +105,36 @@ final class LayoutTests: XCTestCase {
         XCTAssertEqual(restoredTarget.value as? String, "123.45")
         app.buttons["Abbrechen"].tap()
     }
+    func testInstallmentFormWithLargeText() throws {
+        let app = XCUIApplication()
+        app.launchEnvironment["MOREMONEY_UI_TEST_STORE"] = "1"
+        app.launchEnvironment["MOREMONEY_RESET_TEST_DATA"] = "1"
+        app.launchArguments += ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
+        app.launch()
+        app.tabBars.buttons["Mehr"].tap()
+        app.buttons["Ratenkäufe"].tap()
+        app.buttons["Ratenkauf hinzufügen"].tap()
+        func fill(_ id: String, _ value: String) {
+            let field = app.textFields[id].exists ? app.textFields[id] : app.textViews[id]
+            for _ in 0..<6 { if field.isHittable { break }; app.swipeUp() }
+            XCTAssertTrue(field.isHittable); field.tap(); field.typeText(value)
+        }
+        fill("installment-name", "Meine langfristige Anschaffung auf Raten")
+        fill("installment-total", "1000,01")
+        fill("installment-rate", "300")
+        app.buttons["Speichern"].tap()
+        let title = app.staticTexts["Meine langfristige Anschaffung auf Raten · Restbetrag"]
+        XCTAssertTrue(title.waitForExistence(timeout: 5))
+        title.tap()
+        for _ in 0..<6 { if app.buttons["Zahlung erfassen"].firstMatch.isHittable { break }; app.swipeUp() }
+        XCTAssertTrue(app.buttons["Zahlung erfassen"].firstMatch.isHittable)
+        app.buttons["Zahlung erfassen"].firstMatch.tap()
+        app.buttons["Buchen"].tap()
+        XCTAssertTrue(app.staticTexts["Bitte ein vorhandenes Konto wählen."].waitForExistence(timeout: 5))
+        app.buttons["Abbrechen"].tap()
+        Thread.sleep(forTimeInterval: 1)
+        let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        attachment.name = "LargeText-Installments"
+        attachment.lifetime = .keepAlways; add(attachment)
+    }
 }

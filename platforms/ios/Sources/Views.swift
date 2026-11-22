@@ -377,7 +377,7 @@ struct SettingsView: View {
             Section("Aktienkurse · Twelve Data") {
                 SecureField("Eigener API-Schlüssel", text: $key).textInputAutocapitalization(.never).autocorrectionDisabled()
                 Button("Schlüssel speichern") {
-                    do { try QuoteKey.save(key); key = ""; keyMessage = "Sicher gespeichert"; StockAlerts.shared.schedule(store) }
+                    do { try QuoteKey.save(key); key = ""; keyMessage = "Sicher gespeichert"; StockAlerts.shared.schedule(store); Task { await StockAlerts.shared.refreshEnabled(store) } }
                     catch { keyMessage = error.localizedDescription }
                 }.disabled(key.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 Button("Schlüssel entfernen", role: .destructive) {
