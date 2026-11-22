@@ -148,3 +148,33 @@ model UserSettings {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
+
+model WatchStock {
+  id           String   @id @default(uuid())
+  name         String
+  symbol       String
+  exchange     String   @default("")
+  currency     String   @default("EUR")
+  group        String   @default("")
+  note         String   @default("")
+  favorite     Boolean  @default(false)
+  targetMicros String?
+  targetDirection String @default("below")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  quotes       StockQuote[]
+  @@unique([symbol, exchange, currency])
+}
+
+model StockQuote {
+  id           String   @id @default(uuid())
+  stockId      String
+  stock        WatchStock @relation(fields: [stockId], references: [id], onDelete: Cascade)
+  priceMicros  String
+  asOf         String
+  source       String   @default("manual")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  @@unique([stockId, source, asOf])
+  @@index([stockId, asOf])
+}

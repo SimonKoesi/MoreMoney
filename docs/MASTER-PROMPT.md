@@ -12,6 +12,8 @@ SQLite, Uploads und spätere Backups liegen außerhalb des Installationsverzeich
 
 ## Verbindliche Finanzregeln
 
+Aktien-Watchlist: individuell auswählbare Aktien, Favoriten, Gruppen, Notizen, Zielkurse und persistenter Verlauf. Watchlist-Kurse getrennt von Haushaltsbuch und Vermögensbeständen halten. Keine fiktiven Börsenkurse, Renditen oder Kaufempfehlungen. Kurse mit Quelle, Handelstag und richtiger Währung darstellen. Manuelle Erfassung bleibt offline möglich; ein externer Datenabruf erfordert explizite Bedienung und einen eigenen konfigurierten Zugang. Exakte Mikroeinheiten statt Float-Arithmetik für Kurswerte und Ziele; historische Währungen und Instrumentidentitäten nicht nachträglich umdeuten. API-Schlüssel bleiben lokal, außerhalb von Backups, Browserantworten und Git.
+
 - Alle Beträge als Integer-Cent; dezimale Eingaben ohne unkontrollierte Float-Arithmetik parsen. Deutsches Format, EUR.
 - Kontostand = Anfangsbestand + gebuchte Einnahmen − Ausgaben ± eigene Transfers. Beide Transferseiten atomar speichern und nicht in Konsum-/Einkommensstatistik zählen.
 - Planung, Bestellstatus, Aufgabenstatus und Zahlungen sind unabhängig. Abhaken und Moodboards erzeugen niemals Buchungen.

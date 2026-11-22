@@ -1,6 +1,9 @@
 # MoreMoney für Windows
 
-Lokaler Finanz-, Budget- und Projektplaner. Zielartefakt: `release/0.3.0/MoreMoney-Setup-0.3.0.exe` für Windows x64. Ohne Cloud-Konto, Bankanbindung oder externe KI. Der Installer enthält die Laufzeit; Endnutzer brauchen kein Node.js.
+
+Lokaler Finanz-, Budget- und Projektplaner mit persönlicher Aktien-Watchlist. Zielartefakt: `release/0.4.0/MoreMoney-Setup-0.4.0.exe` für Windows x64. Ohne Cloud-Konto, Bankanbindung oder externe KI. Der Installer enthält die Laufzeit; Endnutzer brauchen kein Node.js.
+
+[Aktien-Watchlist](docs/AKTIEN-WATCHLIST.md): eigene Aktien, Favoriten, Gruppen, Zielkurse und Verlauf; manuelle Kurse offline, optionale Onlineabrufe über einen eigenen Twelve-Data-Zugang.
 
 ## Benutzen
 

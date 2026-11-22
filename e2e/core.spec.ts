@@ -98,3 +98,37 @@ test('API: Idempotenz, Transfers, Zugriffsschutz und vollständiges Bildbackup',
   expect((await request.post('/api/images',{multipart:{itemId:item.id,image:{name:'fake.png',mimeType:'image/png',buffer:Buffer.from('kein Bild')}}})).ok()).toBe(false);
   const backup=await(await request.get('/api/export')).json();expect(backup.version).toBe(1);expect(Object.keys(backup.images)).toHaveLength(1);
 });
+
+test('individuelle Aktien-Watchlist bleibt vom Haushaltsbuch getrennt',async({page,request})=>{
+  const before=await(await request.get('/api/state')).json();
+  await page.goto('/#/stocks');await expect(page.locator('h1')).toHaveText('Aktien-Watchlist');
+  await page.getByRole('button',{name:'Aktie hinzufügen',exact:true}).click();
+  await page.getByLabel('Name',{exact:true}).fill('Apple');await page.getByLabel('Symbol',{exact:true}).fill('aapl');
+  await page.getByRole('combobox',{name:'Währung',exact:true}).selectOption('USD');
+  await page.getByLabel('Gruppe · optional').fill('Technologie');
+  await page.getByLabel('Notiz · optional').fill('Für langfristige Beobachtung');
+  await page.getByLabel('Zielkurs · optional').fill('150');
+  await page.getByRole('button',{name:'Speichern',exact:true}).click();await expect(page.getByRole('dialog')).toHaveCount(0);
+  await page.getByRole('button',{name:'Apple als Favorit',exact:true}).click();
+  await expect(page.getByRole('button',{name:'Apple als Favorit',exact:true})).toHaveAttribute('aria-pressed','true');
+  await page.getByRole('radio',{name:'Favoriten',exact:true}).check();await expect(page.getByRole('button',{name:'Apple',exact:true})).toBeVisible();
+  for(const [price,day] of [['120','2026-11-20'],['130','2026-11-21']]){
+    await page.getByRole('button',{name:'Kurs erfassen',exact:true}).click();await page.getByLabel('Kurs in USD').fill(price);await page.getByLabel('Handelstag',{exact:true}).fill(day);
+    await page.getByRole('button',{name:'Speichern',exact:true}).click();await expect(page.getByRole('dialog')).toHaveCount(0);
+  }
+  await expect(page.getByText('+8,33%',{exact:true})).toBeVisible();await expect(page.getByText('Erreicht',{exact:true})).toBeVisible();
+  await page.getByRole('button',{name:'Verlauf',exact:true}).click();await expect(page.getByRole('img',{name:/Gespeicherter Kursverlauf/})).toBeVisible();
+  await expect(page.getByText('Für langfristige Beobachtung',{exact:true})).toBeVisible();
+  await page.reload();await expect(page.getByRole('button',{name:'Apple',exact:true})).toBeVisible();
+  let after=await(await request.get('/api/state')).json();const stock=after.stocks[0];
+  expect(stock.favorite).toBe(true);expect(stock.quotes).toHaveLength(2);expect(stock.currency).toBe('USD');
+  const edit={op:'edit',id:stock.id,name:stock.name,symbol:stock.symbol,exchange:stock.exchange,currency:'EUR',note:stock.note,group:stock.group,target:'150',targetDirection:'below'};
+  expect((await request.post('/api/stocks',{data:edit})).ok()).toBe(false);
+  const sameDay={op:'quote',id:stock.id,price:'130.000001',asOf:'2026-11-21'};
+  expect((await request.post('/api/stocks',{data:sameDay})).ok()).toBe(true);await request.post('/api/stocks',{data:sameDay});
+  after=await(await request.get('/api/state')).json();expect(after.stocks[0].quotes).toHaveLength(2);expect(after.stocks[0].quotes[1].priceMicros).toBe('130000001');
+  expect(after.transactions).toEqual(before.transactions);expect(after.accounts).toEqual(before.accounts);
+  const backup=await(await request.get('/api/export')).json();expect(backup.data.stocks).toHaveLength(1);
+  await page.setViewportSize({width:390,height:844});await expect(page.locator('body')).toHaveJSProperty('scrollWidth',390);
+  await page.screenshot({path:'test-results/watchlist-mobile.png',fullPage:true});
+});

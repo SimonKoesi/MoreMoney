@@ -2,6 +2,10 @@
 
 Stand: 22. November 2026. Windows x64, Node 24.19.0.
 
+Version 0.4: 14 Fach-/Validierungstests und vier Browserabläufe bestanden. Neu geprüft: Aktien anlegen, Favoritenfilter, Gruppen/Notizen/Ziele, zwei persistierte Tageskurse und Diagramm, exakte Mikroeinheiten, idempotente Tageskorrektur, Sperre nachträglicher Währungsänderung bei vorhandenen Kursen, Watchlist im Backup und unveränderte Konten/Transaktionen. Die schmale Watchlist-Ansicht wurde als Screenshot angesehen. Providerdaten werden mit isolierten Antwortbeispielen geprüft; mangels persönlichem API-Zugang wurde kein echter Onlinekursabruf durchgeführt.
+
+Der Produktionsbuild und NSIS-Build für 0.4 sind erfolgreich. Desktop-Kompatibilitätstest: MoreMoney 0.3 erzeugt ein Testkonto in einem separaten Verzeichnis; MoreMoney 0.4 ergänzt Migration 002, findet das alte Konto unverändert und meldet die Watchlist-Tabellen als bereit. Auch nach einem weiteren Neustart bleiben Daten vorhanden; nicht authentifizierter API-Zugriff liefert 403.
+
 Version 0.3: MoreMoney-Rebranding. Das Originalbild wurde unverändert als PNG übernommen (identische SHA256-Prüfsumme); das Windows-ICO enthält sieben Größen von 16 bis 256 Pixel. appId und der bisherige Datenspeicher `%APPDATA%/finova/data` bleiben erhalten. Die Browserprüfung umfasst zusätzlich Fenstertitel, Markenname und tatsächlich geladenes Icon.
 
 Die gepackte Windows-EXE meldet MoreMoney als Produktname und Dateibeschreibung; ihr eingebettetes Icon wurde extrahiert und visuell geprüft. Kompatibilitätstest bestanden: FINOVA 0.2 legt ein Testkonto in einem isolierten Verzeichnis an, MoreMoney 0.3 liest denselben Datenbestand und findet ihn auch nach erneutem Neustart wieder. Echte Nutzerdaten wurden dabei nicht verändert.

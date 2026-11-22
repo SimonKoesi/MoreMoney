@@ -29,7 +29,7 @@ async function start(){
   window.once('ready-to-show',()=>{if(process.env.FINOVA_SMOKE!=='1')window.show();});
   await window.loadURL(address);
   if(process.env.FINOVA_SMOKE==='1'){
-    const result=await window.webContents.executeJavaScript(`(async()=>{let d=await(await fetch('/api/state')).json();if(!d.accounts.length){const r=await fetch('/api/state',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'account',name:'Desktop-Persistenztest',type:'Girokonto',openingCents:12345})});if(!r.ok)throw new Error('Desktop-Buchung fehlgeschlagen');d=await r.json();}return {accounts:d.accounts.length,name:d.accounts[0].name,title:document.title};})()`);
+    const result=await window.webContents.executeJavaScript(`(async()=>{let d=await(await fetch('/api/state')).json();if(!d.accounts.length){const r=await fetch('/api/state',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'account',name:'Desktop-Persistenztest',type:'Girokonto',openingCents:12345})});if(!r.ok)throw new Error('Desktop-Buchung fehlgeschlagen');d=await r.json();}return {accounts:d.accounts.length,name:d.accounts[0].name,title:document.title,watchlistReady:Array.isArray(d.stocks)};})()`);
     result.unauthorizedStatus=(await fetch(address+'/api/state')).status;
     require('node:fs').writeFileSync(process.env.FINOVA_SMOKE_RESULT,JSON.stringify(result));
     app.quit();

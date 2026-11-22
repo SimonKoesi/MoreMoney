@@ -7,11 +7,13 @@ const client=createClient({url:process.env.DATABASE_URL||`file:${path.join(direc
 (async()=>{
   try{
     await client.execute('CREATE TABLE IF NOT EXISTS "_finova_migrations" ("id" TEXT PRIMARY KEY)');
-    const existing=await client.execute("SELECT id FROM _finova_migrations WHERE id='001'");
-    if(!existing.rows.length){
-      const sql=fs.readFileSync(path.resolve('prisma/migrations/001_init/migration.sql'),'utf8');
-      await client.executeMultiple('BEGIN IMMEDIATE;\n'+sql+"\nINSERT INTO _finova_migrations VALUES ('001');\nCOMMIT;");
+    for(const [id,folder] of [['001','001_init'],['002','002_watchlist']]){
+      const existing=await client.execute({sql:'SELECT id FROM _finova_migrations WHERE id=?',args:[id]});
+      if(!existing.rows.length){
+        const sql=fs.readFileSync(path.resolve('prisma/migrations',folder,'migration.sql'),'utf8');
+        await client.executeMultiple('BEGIN IMMEDIATE;\n'+sql+`\nINSERT INTO _finova_migrations VALUES ('${id}');\nCOMMIT;`);
+      }
     }
-    console.log('FINOVA-Migration 001 bereit.');
+    console.log('MoreMoney-Migrationen bereit.');
   }finally{client.close();}
 })().catch(()=>{console.error('Migration fehlgeschlagen; vorhandene Datenbank prüfen.');process.exitCode=1;});

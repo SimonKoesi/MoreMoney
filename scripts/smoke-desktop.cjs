@@ -16,6 +16,7 @@ async function run(index, binary=executable, expectedTitle='MoreMoney'){
   if(!fs.existsSync(resultFile))throw new Error('Desktop lieferte kein Prüfergebnis. '+diagnostics.slice(-3000));
   const result=JSON.parse(fs.readFileSync(resultFile,'utf8'));
   if(result.accounts!==1||result.name!=='Desktop-Persistenztest'||result.unauthorizedStatus!==403||!result.title.startsWith(expectedTitle))throw new Error(JSON.stringify(result));
+  if(index!=='legacy'&&result.watchlistReady!==true)throw new Error('Watchlist-Migration nicht bereit.');
   console.log(`Desktop-Start ${index}: UI geladen, SQLite persistent, fremder Zugriff gesperrt.`);
 }
-(async()=>{if(process.env.FINOVA_LEGACY_EXE)await run('legacy',path.resolve(process.env.FINOVA_LEGACY_EXE),'FINOVA');await run(1);await run(2);console.log('Desktop-Neustartprüfung bestanden.');})().catch(e=>{console.error(e);process.exitCode=1;});
+(async()=>{if(process.env.FINOVA_LEGACY_EXE)await run('legacy',path.resolve(process.env.FINOVA_LEGACY_EXE),process.env.FINOVA_LEGACY_TITLE||'FINOVA');await run(1);await run(2);console.log('Desktop-Neustartprüfung bestanden.');})().catch(e=>{console.error(e);process.exitCode=1;});

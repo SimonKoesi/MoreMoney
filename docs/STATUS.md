@@ -1,4 +1,6 @@
-# Funktionsstand 0.3
+# Funktionsstand 0.4
+
+Neu in 0.4: persönliche Aktien-Watchlist mit Favoriten, Gruppen, Notizen, exakten Zielkursen und gespeichertem Kursverlauf. Manuelle Tageswerte funktionieren offline; optionaler Twelve-Data-Adapter für bewusste Einzelabrufe über eigenen Zugang. Die Watchlist wird mitgesichert und erzeugt keine Kontobuchungen. Details: [AKTIEN-WATCHLIST.md](AKTIEN-WATCHLIST.md).
 
 Neu in 0.3: MoreMoney als Programmname, bereitgestelltes Icon in Oberfläche und Windows-Setup; bisherige Datenspeicher und Installations-ID bleiben kompatibel.
 
