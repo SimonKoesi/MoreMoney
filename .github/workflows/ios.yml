@@ -1,0 +1,59 @@
+name: iOS build and layout tests
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'platforms/ios/**'
+      - '.github/workflows/ios.yml'
+permissions:
+  contents: read
+jobs:
+  ios:
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate Xcode project
+        working-directory: platforms/ios
+        run: |
+          brew install xcodegen
+          xcodegen generate
+      - name: Build unsigned iPhone app
+        working-directory: platforms/ios
+        run: |
+          xcodebuild -project MoreMoney.xcodeproj -scheme MoreMoney -configuration Release -sdk iphoneos -derivedDataPath ../../build/ios CODE_SIGNING_ALLOWED=NO build
+          mkdir -p ../../release/ios/Payload
+          cp -R ../../build/ios/Build/Products/Release-iphoneos/MoreMoney.app ../../release/ios/Payload/
+          cd ../../release/ios
+          zip -qr MoreMoney-unsigned.ipa Payload
+          shasum -a 256 MoreMoney-unsigned.ipa > SHA256SUMS.txt
+      - name: Select small iPhone simulator
+        run: |
+          python3 - <<'PY'
+          import json,subprocess,os
+          devices=json.loads(subprocess.check_output(['xcrun','simctl','list','devices','available','-j']))['devices']
+          phones=[d for runtime,items in devices.items() if 'iOS' in runtime for d in items if 'iPhone' in d['name']]
+          if not phones: raise SystemExit('No iPhone simulator is available')
+          phones.sort(key=lambda d:(0 if 'SE' in d['name'] else 1 if 'mini' in d['name'] else 2,d['name']))
+          with open(os.environ['GITHUB_ENV'],'a') as f:f.write('IOS_SIMULATOR='+phones[0]['udid']+'\n')
+          PY
+      - name: Run model and large-text UI tests
+        working-directory: platforms/ios
+        run: |
+          xcodebuild -project MoreMoney.xcodeproj -scheme MoreMoney -destination "platform=iOS Simulator,id=$IOS_SIMULATOR" -derivedDataPath ../../build/ios-tests -resultBundlePath ../../build/MoreMoney-tests.xcresult CODE_SIGNING_ALLOWED=NO test
+      - name: Upload unsigned IPA
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MoreMoney-iOS-unsigned
+          path: |
+            release/ios/MoreMoney-unsigned.ipa
+            release/ios/SHA256SUMS.txt
+          if-no-files-found: ignore
+      - name: Upload native test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MoreMoney-iOS-tests
+          path: build/MoreMoney-tests.xcresult
+          if-no-files-found: ignore

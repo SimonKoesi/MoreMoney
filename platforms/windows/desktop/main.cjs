@@ -11,7 +11,7 @@ app.on('second-instance',()=>{if(window){if(window.isMinimized())window.restore(
 async function port(){return new Promise((resolve,reject)=>{const socket=net.createServer();socket.on('error',reject);socket.listen(0,'127.0.0.1',()=>{const p=socket.address().port;socket.close(()=>resolve(p));});});}
 async function start(){
   const dataDir=process.env.FINOVA_TEST_DATA || path.join(app.getPath('userData'),'data');
-  const base=app.isPackaged?path.join(process.resourcesPath,'server'):path.join(__dirname,'../desktop-server');
+  const base=app.isPackaged?path.join(process.resourcesPath,'server'):path.join(app.getAppPath(),'desktop-server');
   const p=await port();
   const token=crypto.randomBytes(32).toString('hex');
   server=utilityProcess.fork(path.join(base,'server.js'),[],{cwd:base,env:{...process.env,NODE_ENV:'production',PORT:String(p),HOSTNAME:'127.0.0.1',FINOVA_DATA_DIR:dataDir,FINOVA_SESSION_TOKEN:token,DATABASE_URL:`file:${path.join(dataDir,'finova.db').replaceAll('\\','/')}`},stdio:'pipe'});
