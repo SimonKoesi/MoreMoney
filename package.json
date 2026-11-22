@@ -1,0 +1,85 @@
+{
+  "name": "finova",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Lokaler Finanz- und Lebensplaner für Windows",
+  "author": "FINOVA",
+  "main": "desktop/main.cjs",
+  "scripts": {
+    "dev": "next dev --hostname 127.0.0.1",
+    "build": "prisma generate && next build --webpack",
+    "start": "next start --hostname 127.0.0.1",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "db:migrate": "node scripts/migrate.cjs",
+    "desktop:stage": "node scripts/stage.cjs",
+    "desktop:build": "npm run build && npm run desktop:stage && electron-builder --projectDir desktop-app --win nsis --x64 --publish never",
+    "desktop:preview": "electron ."
+  },
+  "build": {
+    "appId": "de.finova.desktop",
+    "productName": "FINOVA",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "desktop/**",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "desktop-server",
+        "to": "server"
+      }
+    ],
+    "win": {
+      "target": "nsis",
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "deleteAppDataOnUninstall": false,
+      "artifactName": "FINOVA-Setup-${version}.${ext}"
+    }
+  },
+  "overrides": {
+    "effect": "3.22.5"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^7.0.8",
+    "@libsql/client": "^0.18.0",
+    "@prisma/adapter-libsql": "^7.10.1",
+    "@prisma/client": "^7.10.1",
+    "@radix-ui/react-dialog": "^1.3.1",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.4.0",
+    "lucide-react": "^1.77.0",
+    "next": "^16.4.6",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-hook-form": "^7.92.0",
+    "recharts": "^3.11.0",
+    "sharp": "^0.35.5",
+    "tailwind-merge": "^3.7.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.65.1",
+    "@tailwindcss/postcss": "^4.3.5",
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "electron": "^45.4.1",
+    "electron-builder": "^26.18.0",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.4.6",
+    "prisma": "^7.10.1",
+    "tailwindcss": "^4.3.5",
+    "typescript": "^6.0.3",
+    "vitest": "^5.1.1"
+  }
+}

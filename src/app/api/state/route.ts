@@ -1,0 +1,87 @@
+import { db, ready, state } from '@/lib/db';
+import { command, sameOrigin } from '@/lib/validation';
+import { NextResponse } from 'next/server';
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
+export async function GET() { return NextResponse.json(await state(), {headers:{'Cache-Control':'no-store'}}); }
+export async function POST(request: Request) {
+  if (!sameOrigin(request)) return NextResponse.json({error:'Anfrage nicht erlaubt.'},{status:403});
+  try {
+    if (Number(request.headers.get('content-length') || 0) > 100_000) throw new Error('Anfrage zu groß.');
+    const input = await request.text();
+    if (input.length > 100_000) throw new Error('Anfrage zu groß.');
+    const result = command.safeParse(JSON.parse(input));
+    if (!result.success) return NextResponse.json({error:result.error.issues[0]?.message || 'Eingaben prüfen.'},{status:400});
+    const c = result.data;
+    await ready();
+    switch(c.op) {
+      case 'account': await db.account.create({data:{name:c.name,type:c.type,openingCents:c.openingCents}}); break;
+      case 'archiveAccount': await db.account.update({where:{id:c.id},data:{archived:c.archived}}); break;
+      case 'transaction': await db.$transaction(async tx => {
+        const previous = await tx.transaction.findUnique({where:{requestId:c.requestId}});
+        if (previous) return;
+        const account = await tx.account.findUniqueOrThrow({where:{id:c.accountId}});
+        if (account.archived) throw new Error('Archiviertes Konto.');
+        if(c.itemId) {
+          const item = await tx.budgetItem.findUniqueOrThrow({where:{id:c.itemId}});
+          if(item.budgetId !== c.budgetId || c.kind !== 'expense') throw new Error('Ungültige Positionsverknüpfung.');
+        }
+        const {op:_,...data}=c; void _;
+        await tx.transaction.create({data});
+      }); break;
+      case 'deleteTransaction': await db.$transaction(async tx => {
+        const p=await tx.transaction.findUniqueOrThrow({where:{id:c.id}});
+        if(p.transferId) await tx.transaction.deleteMany({where:{transferId:p.transferId}});
+        else await tx.transaction.delete({where:{id:c.id}});
+      }); break;
+      case 'transfer': await db.$transaction(async tx => {
+        if(await tx.transaction.findUnique({where:{requestId:c.requestId}})) return;
+        const accounts=await tx.account.findMany({where:{id:{in:[c.from,c.to]},archived:false}});
+        if(accounts.length!==2) throw new Error('Zwei aktive Konten erforderlich.');
+        const common={title:'Umbuchung',amountCents:c.amountCents,date:c.date,transferId:c.requestId};
+        await tx.transaction.create({data:{...common,accountId:c.from,kind:'transfer-out',requestId:c.requestId}});
+        await tx.transaction.create({data:{...common,accountId:c.to,kind:'transfer-in',requestId:crypto.randomUUID()}});
+      }); break;
+      case 'budget': await db.budget.create({data:{name:c.name,description:c.description,limitCents:c.limitCents}}); break;
+      case 'archiveBudget': await db.budget.update({where:{id:c.id},data:{archived:c.archived}}); break;
+      case 'duplicateBudget': {
+        const b=await db.budget.findUniqueOrThrow({where:{id:c.id},include:{items:true}});
+        await db.budget.create({data:{name:b.name+' (Kopie)',description:b.description,limitCents:b.limitCents,items:{create:b.items.map(i=>({name:i.name,plannedCents:i.plannedCents,quantity:i.quantity,category:i.category,note:i.note}))}}}); break;
+      }
+      case 'item': { const {op:_,...data}=c; void _; if(!Number.isSafeInteger(c.plannedCents*c.quantity) || c.plannedCents*c.quantity>2_000_000_000) throw new Error('Positionsbetrag zu groß.'); await db.budgetItem.create({data}); break; }
+      case 'updateItem': { const {op:_,id,...data}=c; void _; if(c.plannedCents*c.quantity>2_000_000_000) throw new Error('Positionsbetrag zu groß.'); await db.budgetItem.update({where:{id},data}); break; }
+      case 'toggleItem': await db.budgetItem.update({where:{id:c.id},data:{done:c.done}}); break;
+      case 'statusItem': await db.budgetItem.update({where:{id:c.id},data:{status:c.status}}); break;
+      case 'deleteItem': if(await db.transaction.count({where:{itemId:c.id}})) throw new Error('Position hat Zahlungen und bleibt erhalten.'); else await db.budgetItem.delete({where:{id:c.id}}); break;
+      case 'link': await db.productLink.create({data:{itemId:c.itemId,label:c.label,url:c.url}}); break;
+      case 'deleteLink': await db.productLink.delete({where:{id:c.id}}); break;
+      case 'alternative': await db.alternative.create({data:{itemId:c.itemId,name:c.name,priceCents:c.priceCents,shippingCents:c.shippingCents}}); break;
+      case 'activateAlternative': await db.$transaction(async tx=> { const a=await tx.alternative.findUniqueOrThrow({where:{id:c.id}}); await tx.alternative.updateMany({where:{itemId:a.itemId},data:{active:false}}); await tx.alternative.update({where:{id:c.id},data:{active:true}}); }); break;
+      case 'project': await db.project.create({data:{name:c.name,description:c.description}}); break;
+      case 'task': await db.projectTask.create({data:{projectId:c.projectId,name:c.name}}); break;
+      case 'toggleTask': await db.projectTask.update({where:{id:c.id},data:{done:c.done}}); break;
+      case 'deleteTask': await db.projectTask.delete({where:{id:c.id}}); break;
+      case 'goal': await db.savingsGoal.create({data:{name:c.name,targetCents:c.targetCents}}); break;
+      case 'contribute': await db.savingsGoal.update({where:{id:c.id},data:{savedCents:{increment:c.amountCents}}}); break;
+      case 'recurring': await db.recurringPayment.create({data:{name:c.name,amountCents:c.amountCents,interval:c.interval,dueDate:c.dueDate}}); break;
+      case 'deleteRecurring': await db.recurringPayment.delete({where:{id:c.id}}); break;
+      case 'settings': await db.userSettings.update({where:{id:'local'},data:{theme:c.theme,reserveCents:c.reserveCents,widgets:c.widgets}}); break;
+      case 'demo': await db.$transaction(async tx=>{
+        if(await tx.account.count() || await tx.budget.count() || await tx.project.count()) throw new Error('Demo nur in einer leeren Datenbank laden.');
+        const a=await tx.account.create({data:{name:'Demo · Girokonto',openingCents:245000}});
+        const today=new Date().toISOString().slice(0,10);
+        await tx.transaction.create({data:{title:'Demo · Nettogehalt',kind:'income',amountCents:285000,date:today,accountId:a.id,requestId:crypto.randomUUID()}});
+        const b=await tx.budget.create({data:{name:'Demo · Zuhause',description:'Ein guter Platz für neue Ideen.',limitCents:250000,items:{create:[{name:'Sofa',plannedCents:89900,quantity:1,category:'Wohnen'},{name:'Leselampe',plannedCents:12900,quantity:1,category:'Licht'}]}}});
+        const item=await tx.budgetItem.findFirstOrThrow({where:{budgetId:b.id,name:'Sofa'}});
+        await tx.transaction.create({data:{title:'Demo · Sofa-Anzahlung',kind:'expense',amountCents:20000,date:today,accountId:a.id,budgetId:b.id,itemId:item.id,requestId:crypto.randomUUID()}});
+        await tx.savingsGoal.create({data:{name:'Demo · Kleine Auszeit',targetCents:180000,savedCents:62000}});
+        await tx.project.create({data:{name:'Demo · Zuhause gestalten',tasks:{create:[{name:'Maße nehmen',done:true},{name:'Liefertermine abstimmen'}]}}});
+      }); break;
+    }
+    return NextResponse.json(await state());
+  } catch(error) {
+    const known=error instanceof Error && !error.message.includes('prisma') && !error.message.includes('Invalid `');
+    return NextResponse.json({error:known && error.message.length<150 ? error.message : 'Änderung konnte nicht gespeichert werden. Eingaben bleiben erhalten.'},{status:400});
+  }
+}

@@ -1,0 +1,150 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Account {
+  id           String   @id @default(uuid())
+  name         String
+  type         String   @default("Girokonto")
+  openingCents Int      @default(0)
+  archived     Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  transactions Transaction[]
+}
+
+model Transaction {
+  id           String   @id @default(uuid())
+  requestId    String   @unique
+  title        String
+  amountCents  Int
+  kind         String
+  date         String
+  category     String   @default("")
+  note         String   @default("")
+  accountId    String
+  account      Account  @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  budgetId     String?
+  budget       Budget?  @relation(fields: [budgetId], references: [id], onDelete: Restrict)
+  itemId       String?
+  item         BudgetItem? @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  transferId   String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  @@index([date])
+}
+
+model Budget {
+  id           String   @id @default(uuid())
+  name         String
+  description  String   @default("")
+  limitCents   Int
+  color        String   @default("#58d6bc")
+  archived     Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  items        BudgetItem[]
+  transactions Transaction[]
+}
+
+model BudgetItem {
+  id           String   @id @default(uuid())
+  budgetId     String
+  budget       Budget   @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+  name         String
+  category     String   @default("")
+  plannedCents Int
+  quantity     Int      @default(1)
+  done         Boolean  @default(false)
+  status       String   @default("Geplant")
+  note         String   @default("")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  transactions Transaction[]
+  links        ProductLink[]
+  images       ProductImage[]
+  alternatives Alternative[]
+}
+
+model ProductLink {
+  id           String   @id @default(uuid())
+  itemId       String
+  item         BudgetItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  url          String
+  label        String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model ProductImage {
+  id           String   @id
+  itemId       String
+  item         BudgetItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  mime         String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Alternative {
+  id           String   @id @default(uuid())
+  itemId       String
+  item         BudgetItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  name         String
+  priceCents   Int
+  shippingCents Int     @default(0)
+  active       Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Project {
+  id           String   @id @default(uuid())
+  name         String
+  description  String   @default("")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  tasks        ProjectTask[]
+}
+
+model ProjectTask {
+  id           String   @id @default(uuid())
+  projectId    String
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name         String
+  done         Boolean @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model SavingsGoal {
+  id           String   @id @default(uuid())
+  name         String
+  targetCents  Int
+  savedCents   Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model RecurringPayment {
+  id           String   @id @default(uuid())
+  name         String
+  amountCents  Int
+  interval     String   @default("monthly")
+  dueDate      String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model UserSettings {
+  id           String   @id @default("local")
+  theme        String   @default("dark")
+  reserveCents Int      @default(0)
+  widgets      String   @default("balance,income,expense,planned")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
