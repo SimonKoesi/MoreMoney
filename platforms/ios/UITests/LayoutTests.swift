@@ -19,7 +19,8 @@ final class LayoutTests: XCTestCase {
         amount.tap(); amount.typeText("1234,56")
         app.buttons["save-record"].tap()
         XCTAssertTrue(app.staticTexts[title].waitForExistence(timeout: 5))
-        let attachment = XCTAttachment(screenshot: app.screenshot())
+        Thread.sleep(forTimeInterval: 1) // Wait for the native navigation transition before visual capture.
+        let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
         attachment.name = "LargeText-Portrait"
         attachment.lifetime = .keepAlways
         add(attachment)
@@ -27,7 +28,10 @@ final class LayoutTests: XCTestCase {
         XCTAssertTrue(app.tabBars.buttons["Aktien"].isHittable)
         app.tabBars.buttons["Aktien"].tap()
         XCTAssertTrue(app.navigationBars["Aktien"].exists)
-        let landscape = XCTAttachment(screenshot: app.screenshot())
+        let landscapeFrame = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in app.frame.width > app.frame.height }, object: nil)
+        XCTAssertEqual(XCTWaiter.wait(for: [landscapeFrame], timeout: 5), .completed)
+        Thread.sleep(forTimeInterval: 1)
+        let landscape = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
         landscape.name = "LargeText-Landscape"
         landscape.lifetime = .keepAlways
         add(landscape)
@@ -55,7 +59,8 @@ final class LayoutTests: XCTestCase {
         XCTAssertTrue(title.waitForExistence(timeout: 5))
         title.tap()
         XCTAssertTrue(app.buttons["Position hinzufügen"].isHittable)
-        let budget = XCTAttachment(screenshot: app.screenshot())
+        Thread.sleep(forTimeInterval: 1)
+        let budget = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
         budget.name = "LargeText-Budget"
         budget.lifetime = .keepAlways
         add(budget)
@@ -68,7 +73,8 @@ final class LayoutTests: XCTestCase {
         symbol.tap(); symbol.typeText("LONGSTOCK")
         app.buttons["save-record"].tap()
         XCTAssertTrue(app.staticTexts["Persönliche langfristige Aktienbeobachtung"].waitForExistence(timeout: 5))
-        let stocks = XCTAttachment(screenshot: app.screenshot())
+        Thread.sleep(forTimeInterval: 1)
+        let stocks = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
         stocks.name = "LargeText-Stocks"
         stocks.lifetime = .keepAlways
         add(stocks)
@@ -79,7 +85,8 @@ final class LayoutTests: XCTestCase {
         let target = app.textFields["alert-target"]
         for _ in 0..<4 { if target.isHittable { break }; app.swipeUp() }
         target.tap(); target.typeText("123,45")
-        let alertScreenshot = XCTAttachment(screenshot: app.screenshot())
+        Thread.sleep(forTimeInterval: 1)
+        let alertScreenshot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
         alertScreenshot.name = "LargeText-AlertEditor"
         alertScreenshot.lifetime = .keepAlways
         add(alertScreenshot)
