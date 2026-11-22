@@ -4,6 +4,7 @@ const net = require('node:net');
 const crypto = require('node:crypto');
 let window, server;
 if(process.env.FINOVA_TEST_DATA)app.setPath('userData',path.dirname(process.env.FINOVA_TEST_DATA));
+else app.setPath('userData',path.join(app.getPath('appData'),'finova'));
 const lock=app.requestSingleInstanceLock();
 if(!lock) app.quit();
 app.on('second-instance',()=>{if(window){if(window.isMinimized())window.restore();window.focus();}});
@@ -20,9 +21,9 @@ async function start(){
   const address=`http://127.0.0.1:${p}`;
   session.defaultSession.webRequest.onBeforeSendHeaders((details,callback)=>{if(details.url.startsWith(address+'/'))details.requestHeaders['X-Finova-Token']=token;callback({requestHeaders:details.requestHeaders});});
   let ready=false;
-  for(let i=0;i<160;i++){if(failed)throw new Error('Lokaler FINOVA-Dienst konnte nicht gestartet werden.'+(process.env.FINOVA_SMOKE==='1'?diagnostics:''));try{const response=await fetch(address+'/api/state',{headers:{'X-Finova-Token':token}});if(response.ok){ready=true;break;}}catch{}await new Promise(r=>setTimeout(r,250));}
+  for(let i=0;i<160;i++){if(failed)throw new Error('Lokaler MoreMoney-Dienst konnte nicht gestartet werden.'+(process.env.FINOVA_SMOKE==='1'?diagnostics:''));try{const response=await fetch(address+'/api/state',{headers:{'X-Finova-Token':token}});if(response.ok){ready=true;break;}}catch{}await new Promise(r=>setTimeout(r,250));}
   if(!ready)throw new Error('Der lokale Dienst antwortet nicht.');
-  window=new BrowserWindow({width:1440,height:960,minWidth:380,minHeight:620,title:'FINOVA',backgroundColor:'#0e1119',show:false,autoHideMenuBar:true,webPreferences:{nodeIntegration:false,contextIsolation:true,sandbox:true}});
+  window=new BrowserWindow({width:1440,height:960,minWidth:380,minHeight:620,title:'MoreMoney',icon:path.join(base,'public/app-icon.png'),backgroundColor:'#0e1119',show:false,autoHideMenuBar:true,webPreferences:{nodeIntegration:false,contextIsolation:true,sandbox:true}});
   window.webContents.setWindowOpenHandler(({url})=>{const target=new URL(url);if(target.origin===address)return {action:'allow',overrideBrowserWindowOptions:{webPreferences:{nodeIntegration:false,contextIsolation:true,sandbox:true}}};if(['https:','http:'].includes(target.protocol))void shell.openExternal(url);return {action:'deny'};});
   window.webContents.on('will-navigate',(event,url)=>{if(new URL(url).origin!==address)event.preventDefault();});
   window.once('ready-to-show',()=>{if(process.env.FINOVA_SMOKE!=='1')window.show();});
@@ -34,6 +35,6 @@ async function start(){
     app.quit();
   }
 }
-if(lock)app.whenReady().then(start).catch(error=>{if(process.env.FINOVA_SMOKE==='1')require('node:fs').writeFileSync(process.env.FINOVA_SMOKE_RESULT,JSON.stringify({error:error.message}));else dialog.showErrorBox('FINOVA konnte nicht starten',error.message);app.quit();});
+if(lock)app.whenReady().then(start).catch(error=>{if(process.env.FINOVA_SMOKE==='1')require('node:fs').writeFileSync(process.env.FINOVA_SMOKE_RESULT,JSON.stringify({error:error.message}));else dialog.showErrorBox('MoreMoney konnte nicht starten',error.message);app.quit();});
 app.on('window-all-closed',()=>app.quit());
 app.on('before-quit',()=>{if(server)server.kill();});

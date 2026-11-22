@@ -1,6 +1,6 @@
-# FINOVA – Entwicklungsauftrag für die Windows-Desktop-App
+# MoreMoney – Entwicklungsauftrag für die Windows-Desktop-App
 
-Entwickle FINOVA: „Dein Geld. Deine Pläne. Dein Überblick.“ Verbindliches Endartefakt ist ein tatsächlich gebauter Windows-x64-Installer `FINOVA-Setup-<Version>.exe`, keine reine Website. Verwende die persönlichen Programmierstandards aus AGENTS.md und bedarfsabhängig den Skill ui-bausteine. Rollen sind Perspektiven für Produkt, Architektur, UI, Entwicklung und QA; sie verlangen keine Agentendelegation.
+Entwickle MoreMoney: „Dein Geld. Deine Pläne. Dein Überblick.“ Verbindliches Endartefakt ist ein tatsächlich gebauter Windows-x64-Installer `MoreMoney-Setup-<Version>.exe`, keine reine Website. Verwende die persönlichen Programmierstandards aus AGENTS.md und bedarfsabhängig den Skill ui-bausteine. Rollen sind Perspektiven für Produkt, Architektur, UI, Entwicklung und QA; sie verlangen keine Agentendelegation.
 
 ## Ziel und Architektur
 

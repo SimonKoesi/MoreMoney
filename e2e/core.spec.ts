@@ -2,6 +2,9 @@ import { test, expect } from '@playwright/test';
 import sharp from 'sharp';
 test('persistenter Finanzablauf, Bilder, Teilzahlungen und unabhängige Checkliste',async({page,request})=>{
   await page.goto('/');
+  await expect(page).toHaveTitle(/MoreMoney/);
+  await expect(page.locator('.sidebar .brand')).toContainText('MoreMoney');
+  await expect(page.locator('.sidebar .brand-icon')).toHaveJSProperty('naturalWidth',1254);
   await page.getByRole('button',{name:'Konto anlegen',exact:true}).first().click();
   await page.getByLabel('Name',{exact:true}).fill('Testkonto');
   await page.getByLabel('Anfangsbestand in EUR').fill('2000');

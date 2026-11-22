@@ -1,13 +1,13 @@
 {
-  "name": "finova",
-  "version": "0.2.0",
+  "name": "moremoney",
+  "version": "0.3.0",
   "private": true,
   "description": "Lokaler Finanz- und Lebensplaner für Windows",
-  "author": "FINOVA",
+  "author": "MoreMoney",
   "main": "desktop/main.cjs",
   "scripts": {
     "dev": "next dev --hostname 127.0.0.1",
-    "build": "prisma generate && next build --webpack",
+    "build": "node scripts/icons.cjs && prisma generate && next build --webpack",
     "start": "next start --hostname 127.0.0.1",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
@@ -20,7 +20,7 @@
   },
   "build": {
     "appId": "de.finova.desktop",
-    "productName": "FINOVA",
+    "productName": "MoreMoney",
     "directories": {
       "output": "release"
     },
@@ -43,7 +43,7 @@
       "perMachine": false,
       "allowToChangeInstallationDirectory": true,
       "deleteAppDataOnUninstall": false,
-      "artifactName": "FINOVA-Setup-${version}.${ext}"
+      "artifactName": "MoreMoney-Setup-${version}.${ext}"
     }
   },
   "overrides": {

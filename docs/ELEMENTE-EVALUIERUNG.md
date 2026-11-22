@@ -1,4 +1,4 @@
-# Bausteinauswahl für FINOVA 0.2
+# Bausteinauswahl für MoreMoney 0.2
 
 Die bereitgestellte ELEMENTE.md dient als Anforderungskatalog. Ihre Verweise auf Skills/Projektdateien werden durch die mitgelieferten Programmierstandards erfüllt; daraus entsteht kein Auftrag, ungeeignete Effekte einzubauen. Implementierung im React-Stack, ohne Übernahme fremden React-Bits-Quellcodes.
 

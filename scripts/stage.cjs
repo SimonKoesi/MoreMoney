@@ -21,11 +21,7 @@ for(const name of ['@libsql/win32-x64-msvc','@img/sharp-win32-x64','@img/sharp-l
   if(fs.existsSync(source))fs.cpSync(source,path.join(target,'node_modules',name),{recursive:true});
 }
 async function finish(){
-  const svg='<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"><rect width="256" height="256" rx="60" fill="#102721"/><rect x="16" y="16" width="224" height="224" rx="48" fill="#68ddc1"/><path d="M87 60h102l-7 31h-66l-8 34h57l-7 30h-58l-11 47H51z" fill="#102721"/></svg>';
-  const png=await require('sharp')(Buffer.from(svg)).png().toBuffer();
-  const header=Buffer.alloc(22);header.writeUInt16LE(1,2);header.writeUInt16LE(1,4);header.writeUInt16LE(1,10);header.writeUInt16LE(32,12);header.writeUInt32LE(png.length,14);header.writeUInt32LE(22,18);
-  fs.mkdirSync(path.join(base,'build'),{recursive:true});
-  fs.writeFileSync(path.join(base,'build/icon.ico'),Buffer.concat([header,png]));
+  await require('./icons.cjs')(base);
   project.build.win.icon=path.join(base,'build/icon.ico');
   delete project.build.win.signAndEditExecutable;
   project.build.win.signExecutable=false;

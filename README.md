@@ -1,12 +1,12 @@
-# FINOVA für Windows
+# MoreMoney für Windows
 
-Lokaler Finanz-, Budget- und Projektplaner. Zielartefakt: `release/0.2.0/FINOVA-Setup-0.2.0.exe` für Windows x64. Ohne Cloud-Konto, Bankanbindung oder externe KI. Der Installer enthält die Laufzeit; Endnutzer brauchen kein Node.js.
+Lokaler Finanz-, Budget- und Projektplaner. Zielartefakt: `release/0.3.0/MoreMoney-Setup-0.3.0.exe` für Windows x64. Ohne Cloud-Konto, Bankanbindung oder externe KI. Der Installer enthält die Laufzeit; Endnutzer brauchen kein Node.js.
 
 ## Benutzen
 
-Setup-Datei starten, Installationsort wählen, FINOVA öffnen. Ein Konto mit Anfangsbestand anlegen und danach Buchungen oder Budgets erfassen. Optional lassen sich in einer leeren Datenbank ausdrücklich markierte Demodaten laden. Eine abgehakte Position ist keine Zahlung; Zahlungen werden separat erfasst, einschließlich Teilzahlungen.
+Setup-Datei starten, Installationsort wählen, MoreMoney öffnen. Ein Konto mit Anfangsbestand anlegen und danach Buchungen oder Budgets erfassen. Optional lassen sich in einer leeren Datenbank ausdrücklich markierte Demodaten laden. Eine abgehakte Position ist keine Zahlung; Zahlungen werden separat erfasst, einschließlich Teilzahlungen.
 
-Finanzdaten und Bilder bleiben unter `%APPDATA%/FINOVA/data` außerhalb des Installationsordners. Unter Einstellungen regelmäßig das vollständige JSON-Backup einschließlich Bilder herunterladen. Updates entfernen diese Daten nicht. Version 0.1 ist eine lokale Einzelbenutzer-App und darf nicht öffentlich als Server betrieben werden. Ohne Signatur kann Windows vor einem unbekannten Herausgeber warnen; es wird keine Signatur vorgetäuscht.
+Finanzdaten und Bilder bleiben unter `%APPDATA%/finova/data` außerhalb des Installationsordners. Unter Einstellungen regelmäßig das vollständige JSON-Backup einschließlich Bilder herunterladen. Updates entfernen diese Daten nicht. Version 0.1 ist eine lokale Einzelbenutzer-App und darf nicht öffentlich als Server betrieben werden. Ohne Signatur kann Windows vor einem unbekannten Herausgeber warnen; es wird keine Signatur vorgetäuscht.
 
 ## Entwicklung
 
