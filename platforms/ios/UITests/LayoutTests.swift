@@ -27,12 +27,50 @@ final class LayoutTests: XCTestCase {
         XCTAssertTrue(app.tabBars.buttons["Aktien"].isHittable)
         app.tabBars.buttons["Aktien"].tap()
         XCTAssertTrue(app.navigationBars["Aktien"].exists)
-        add(XCTAttachment(screenshot: app.screenshot()))
+        let landscape = XCTAttachment(screenshot: app.screenshot())
+        landscape.name = "LargeText-Landscape"
+        landscape.lifetime = .keepAlways
+        add(landscape)
         XCUIDevice.shared.orientation = .portrait
         app.terminate()
         app.launchEnvironment["MOREMONEY_RESET_TEST_DATA"] = "0"
         app.launch()
         app.tabBars.buttons["Finanzen"].tap()
         XCTAssertTrue(app.staticTexts[title].waitForExistence(timeout: 5))
+    }
+
+    func testLongBudgetAndStockForms() throws {
+        let app = XCUIApplication()
+        app.launchEnvironment["MOREMONEY_UI_TEST_STORE"] = "1"
+        app.launchEnvironment["MOREMONEY_RESET_TEST_DATA"] = "1"
+        app.launchArguments += ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
+        app.launch()
+        app.tabBars.buttons["Pläne"].tap()
+        app.buttons["Plan hinzufügen"].tap()
+        let name = app.textFields["record-name"].exists ? app.textFields["record-name"] : app.textViews["record-name"]
+        name.tap(); name.typeText("Wohnungseinrichtung und langfristige Lebensplanung")
+        app.textFields["record-amount"].tap(); app.textFields["record-amount"].typeText("2500")
+        app.buttons["save-record"].tap()
+        let title = app.staticTexts["Wohnungseinrichtung und langfristige Lebensplanung"]
+        XCTAssertTrue(title.waitForExistence(timeout: 5))
+        title.tap()
+        XCTAssertTrue(app.buttons["Position hinzufügen"].isHittable)
+        let budget = XCTAttachment(screenshot: app.screenshot())
+        budget.name = "LargeText-Budget"
+        budget.lifetime = .keepAlways
+        add(budget)
+        app.tabBars.buttons["Aktien"].tap()
+        app.buttons["Aktie hinzufügen"].tap()
+        let stockName = app.textFields["record-name"].exists ? app.textFields["record-name"] : app.textViews["record-name"]
+        stockName.tap(); stockName.typeText("Persönliche langfristige Aktienbeobachtung")
+        let symbol = app.textFields["Symbol"]
+        for _ in 0..<4 { if symbol.isHittable { break }; app.swipeUp() }
+        symbol.tap(); symbol.typeText("LONGSTOCK")
+        app.buttons["save-record"].tap()
+        XCTAssertTrue(app.staticTexts["Persönliche langfristige Aktienbeobachtung"].waitForExistence(timeout: 5))
+        let stocks = XCTAttachment(screenshot: app.screenshot())
+        stocks.name = "LargeText-Stocks"
+        stocks.lifetime = .keepAlways
+        add(stocks)
     }
 }

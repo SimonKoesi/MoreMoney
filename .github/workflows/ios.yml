@@ -35,12 +35,19 @@ jobs:
           phones=[d for runtime,items in devices.items() if 'iOS' in runtime for d in items if 'iPhone' in d['name']]
           if not phones: raise SystemExit('No iPhone simulator is available')
           phones.sort(key=lambda d:(0 if 'SE' in d['name'] else 1 if 'mini' in d['name'] else 2,d['name']))
+          print('Selected simulator:',phones[0]['name'])
           with open(os.environ['GITHUB_ENV'],'a') as f:f.write('IOS_SIMULATOR='+phones[0]['udid']+'\n')
           PY
       - name: Run model and large-text UI tests
         working-directory: platforms/ios
         run: |
-          xcodebuild -project MoreMoney.xcodeproj -scheme MoreMoney -destination "platform=iOS Simulator,id=$IOS_SIMULATOR" -derivedDataPath ../../build/ios-tests -resultBundlePath ../../build/MoreMoney-tests.xcresult CODE_SIGNING_ALLOWED=NO test
+          xcodebuild -project MoreMoney.xcodeproj -scheme MoreMoney -destination "platform=iOS Simulator,id=$IOS_SIMULATOR" -parallel-testing-enabled NO -derivedDataPath ../../build/ios-tests -resultBundlePath ../../build/MoreMoney-tests.xcresult CODE_SIGNING_ALLOWED=NO test
+      - name: Export native screenshots
+        if: always()
+        run: |
+          if [ -d build/MoreMoney-tests.xcresult ]; then
+            xcrun xcresulttool export attachments --path build/MoreMoney-tests.xcresult --output-path build/ios-screenshots
+          fi
       - name: Upload unsigned IPA
         if: always()
         uses: actions/upload-artifact@v4
@@ -56,4 +63,11 @@ jobs:
         with:
           name: MoreMoney-iOS-tests
           path: build/MoreMoney-tests.xcresult
+          if-no-files-found: ignore
+      - name: Upload native screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MoreMoney-iOS-screenshots
+          path: build/ios-screenshots
           if-no-files-found: ignore
