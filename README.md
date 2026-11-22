@@ -1,38 +1,48 @@
-# MoreMoney für Windows
+# MoreMoney
 
+Persönlicher Finanz-, Budget- und Aktienplaner ohne vorinstallierte Probe- oder Demodaten.
 
-Lokaler Finanz-, Budget- und Projektplaner mit persönlicher Aktien-Watchlist. Zielartefakt: `release/0.4.0/MoreMoney-Setup-0.4.0.exe` für Windows x64. Ohne Cloud-Konto, Bankanbindung oder externe KI. Der Installer enthält die Laufzeit; Endnutzer brauchen kein Node.js.
+| Plattform | Quellcode | Ausgabe |
+| --- | --- | --- |
+| Windows x64 | [platforms/windows](platforms/windows/README.md), src/, prisma/ | release/windows/0.5.0/MoreMoney-Setup-0.5.0.exe |
+| iPhone / iPad, iOS 17+ | [platforms/ios](platforms/ios/README.md) | release/ios/MoreMoney-iOS-0.5.0-Sideloadly.ipa |
 
-[Aktien-Watchlist](docs/AKTIEN-WATCHLIST.md): eigene Aktien, Favoriten, Gruppen, Zielkurse und Verlauf; manuelle Kurse offline, optionale Onlineabrufe über einen eigenen Twelve-Data-Zugang.
+Downloads unter [Releases](https://github.com/SimonKoesi/finova/releases). Die iOS-App wurde tatsächlich auf macOS gebaut, ist ohne Apple-Signierung aber noch nicht regulär installierbar. Für Ad-Hoc/TestFlight/App Store sind ein eigenes Apple-Team und passendes Provisioning erforderlich. Das Windows-Setup ist ebenfalls weiterhin unsigniert.
 
-## Benutzen
+## Windows
 
-Setup-Datei starten, Installationsort wählen, MoreMoney öffnen. Ein Konto mit Anfangsbestand anlegen und danach Buchungen oder Budgets erfassen. Optional lassen sich in einer leeren Datenbank ausdrücklich markierte Demodaten laden. Eine abgehakte Position ist keine Zahlung; Zahlungen werden separat erfasst, einschließlich Teilzahlungen.
-
-Finanzdaten und Bilder bleiben unter `%APPDATA%/finova/data` außerhalb des Installationsordners. Unter Einstellungen regelmäßig das vollständige JSON-Backup einschließlich Bilder herunterladen. Updates entfernen diese Daten nicht. Version 0.1 ist eine lokale Einzelbenutzer-App und darf nicht öffentlich als Server betrieben werden. Ohne Signatur kann Windows vor einem unbekannten Herausgeber warnen; es wird keine Signatur vorgetäuscht.
-
-## Entwicklung
-
-Node.js 24 LTS, npm und Windows x64. PowerShell bei blockierten npm-Skripten mit `npm.cmd` verwenden.
+Node.js 24 LTS und npm. In PowerShell bei blockiertem npm.ps1 npm.cmd verwenden:
 
 ```powershell
 npm.cmd ci
 npx.cmd prisma generate
 npm.cmd run dev
-```
-
-Web-Entwicklung nur auf `http://127.0.0.1:3000`; lokale Daten dann unter `data/`. Die App führt beim ersten Datenzugriff die versionierte Initialmigration aus. Keine echten Daten für Tests verwenden.
-
-```powershell
-npm.cmd run typecheck
-npm.cmd run lint
-npm.cmd test
-npm.cmd run test:e2e
 npm.cmd run desktop:build
 ```
 
-Bei einer Umgebung, die npm-Installationsskripte blockiert, die erforderliche Electron-Laufzeit gezielt mit `node node_modules/electron/install.js` installieren. Die Sicherheitsrichtlinie muss dafür nicht global deaktiviert werden. `node scripts/smoke-desktop.cjs` prüft anschließend die gepackte EXE zweimal mit separaten Testdaten, einschließlich Persistenz und Tokenzugriffsschutz.
+Die Entwicklungsoberfläche läuft nur auf 127.0.0.1:3000. Beim Endnutzer startet Electron den lokalen Dienst mit Sitzungstoken. Daten und Bilder bleiben unter %APPDATA%/finova/data außerhalb des Installationsverzeichnisses. Bei blockierten Installationsskripten kann die Electron-Laufzeit gezielt mit node node_modules/electron/install.js installiert werden.
 
-Der Desktop-Build erzeugt erst Next.js Standalone, kopiert Assets und Migrationen und baut einen NSIS-Installer. Die Electron-Hülle startet einen lokalen, auf 127.0.0.1 beschränkten Dienst mit zufälligem Sitzungstoken, isoliertem Renderer und deaktiviertem Node-Zugriff. Projektdateien, Datenbank und Uploads niemals mit dem Entwicklungsserver ins Internet stellen.
+```powershell
+npm.cmd run lint
+npm.cmd run typecheck
+npm.cmd test
+npm.cmd run test:e2e
+node scripts/smoke-desktop.cjs
+```
 
-Weiterentwicklung: [angepasster Master-Prompt](docs/MASTER-PROMPT.md), [Status und Grenzen](docs/STATUS.md), [Berechnungen](docs/BERECHNUNGEN.md), [Prüfprotokoll](docs/PRUEFUNGEN.md). UI-Muster werden im vorhandenen React-Stack umgesetzt; die mitgelieferten Python-Vorlagen dienen nur als Verhaltensreferenz.
+Migration 003 entfernt den früher ausdrücklich markierten Beispieldatensatz. Zusätzlich selbst angelegte Buchungen, Positionen und Aufgaben in dessen Konten/Plänen bleiben erhalten; deren IDs und Beziehungen werden bewahrt. Demo-Schaltflächen und Demo-API-Befehl wurden entfernt. Regressionstests verwenden isolierte Testdaten, die nicht als App-Inhalte ausgeliefert werden.
+
+## iOS
+
+Die native SwiftUI-App verwendet lokale, atomar gespeicherte Daten und native Navigation/Formulare. Auf einem Mac in platforms/ios mit xcodegen generate das Xcode-Projekt erzeugen und öffnen. Die GitHub-Action „iOS build and layout tests“ führt echte Modell- und Simulator-Tests aus und liefert IPA, xcresult-Protokoll und Screenshots. Die Standard-macOS-Runner sind für dieses öffentliche Repository kostenlos; Apple-Zugangsdaten werden nicht hinterlegt.
+
+Die Plattformen synchronisieren noch nicht automatisch. iOS besitzt einen benutzbaren nativen Kern; [Umfang und Signierung](platforms/ios/README.md) beschreiben die Unterschiede zur Windows-Version. Ein Windows-Build ersetzt keine Apple-Signierung.
+
+## Dokumentation
+
+- [Funktionsstand](docs/STATUS.md) und [Prüfprotokoll](docs/PRUEFUNGEN.md)
+- [Master-Prompt](docs/MASTER-PROMPT.md) und [Bausteine](docs/ELEMENTE-EVALUIERUNG.md)
+- [Berechnungen](docs/BERECHNUNGEN.md) und [Aktien-Watchlist](docs/AKTIEN-WATCHLIST.md)
+
+Backups regelmäßig lokal exportieren. Keine Bankanbindung, keine automatische Übertragung an KI und kein ungefragtes Cloud-Hosting.
+Die iOS-IPA kann über Sideloadly mit eigener Apple-ID signiert und installiert werden (iOS 17+). Individuelle Kursalarme, sichere API-Schlüsselablage und optionale iOS-Hintergrundabrufe: [iPhone-Anleitung](platforms/ios/README.md#sideloadly-und-kursalarme).

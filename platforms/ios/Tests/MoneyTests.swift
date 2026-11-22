@@ -86,4 +86,25 @@ final class MoneyTests: XCTestCase {
         XCTAssertNil(restored.alertsEnabled)
         XCTAssertEqual(restored.id, stock.id)
     }
+    @MainActor func testAlertPersistenceValidationAndRearming() async throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let url = folder.appendingPathComponent("store.json")
+        let store = MoneyStore(url: url)
+        let stock = MoneyRecord(kind: .stock, name: "Eigene Aktie", symbol: "OWN")
+        try store.save(stock)
+        XCTAssertThrowsError(try store.setAlert(stock.id, target: 0, below: false, enabled: true))
+        XCTAssertNil(store.items(.stock).first?.alertsEnabled)
+        try store.setAlert(stock.id, target: 12_345_678, below: true, enabled: true)
+        try store.markAlert(stock.id, inside: true)
+        let restored = MoneyStore(url: url)
+        XCTAssertEqual(restored.items(.stock).first?.amount, 12_345_678)
+        XCTAssertEqual(restored.items(.stock).first?.alertBelow, true)
+        XCTAssertEqual(restored.items(.stock).first?.alertInside, true)
+        try restored.markAlert(stock.id, inside: false)
+        let quote = MoneyRecord(kind: .quote, name: "Kurs", amount: 12_345_678, date: Date().addingTimeInterval(1))
+        XCTAssertTrue(AlertRule.shouldNotify(try XCTUnwrap(restored.items(.stock).first), quote: quote))
+        try restored.setAlert(stock.id, target: 12_345_678, below: true, enabled: false)
+        XCTAssertFalse(AlertRule.shouldNotify(try XCTUnwrap(restored.items(.stock).first), quote: quote))
+    }
 }

@@ -1,10 +1,10 @@
 {
   "name": "moremoney",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "private": true,
   "description": "Lokaler Finanz- und Lebensplaner für Windows",
   "author": "MoreMoney",
-  "main": "desktop/main.cjs",
+  "main": "platforms/windows/desktop/main.cjs",
   "scripts": {
     "dev": "next dev --hostname 127.0.0.1",
     "build": "node scripts/icons.cjs && prisma generate && next build --webpack",
@@ -25,7 +25,7 @@
       "output": "release"
     },
     "files": [
-      "desktop/**",
+      "platforms/windows/desktop/**",
       "package.json"
     ],
     "extraResources": [

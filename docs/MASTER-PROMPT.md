@@ -2,6 +2,12 @@
 
 Entwickle MoreMoney: „Dein Geld. Deine Pläne. Dein Überblick.“ Verbindliches Endartefakt ist ein tatsächlich gebauter Windows-x64-Installer `MoreMoney-Setup-<Version>.exe`, keine reine Website. Verwende die persönlichen Programmierstandards aus AGENTS.md und bedarfsabhängig den Skill ui-bausteine. Rollen sind Perspektiven für Produkt, Architektur, UI, Entwicklung und QA; sie verlangen keine Agentendelegation.
 
+## Plattformen und Distribution
+
+Seit 0.5: Windows unter platforms/windows, native SwiftUI-Version unter platforms/ios. Die Next.js-/Prisma-Dateien im Stamm bilden den Windows-Kern. Ausgaben getrennt unter release/windows/<Version> und release/ios. Ohne gültige Apple-Signierung darf eine IPA nur als unsigniert und nicht als regulär installierbar bezeichnet werden. Native Tests tatsächlich auf macOS/Xcode ausführen, nicht durch Browser-Emulation ersetzen.
+
+Keine Probe- oder Demodaten in App, Defaults oder Produktions-Endpunkten. Den früheren klar markierten Demo-Datensatz über Migration 003 entfernen und eigene Einträge mit ihren Beziehungen erhalten. Testdaten nur isoliert erzeugen, nie im ausgelieferten Datenbestand. Prüfe 320–768 Pixel, Querformat, lange Namen ohne Leerzeichen, große Geldbeträge und bis zu 200 Prozent Schriftgröße sowie native Dynamic-Type-Tests und gedrehte Ansicht.
+
 ## Ziel und Architektur
 
 Eine offline nutzbare Einzelbenutzer-Finanz-, Budget- und Projektplanungs-App ohne Cloud-Konto oder kostenpflichtigen Dienst. Next.js App Router, React, striktes TypeScript, Tailwind, zugängliche shadcn-/Radix-Muster, Lucide, Recharts, Prisma und SQLite. Electron kapselt den lokalen Server und erzeugt über electron-builder einen NSIS-Installer. Ausschließlich stabile kompatible Versionen verwenden und per Lockfile fixieren.
@@ -44,3 +50,7 @@ Zusätzliche ausdrückliche Designvorgabe: möglichst wenig Text im Programm. Ke
 5. **Freigabe pro Version:** Typecheck, Lint, finanzielle Regressionstests, wichtige E2E-Abläufe, DB-Persistenz nach Neustart, Dateivalidierung, responsive Ansicht, Produktionsbuild und tatsächlicher Desktop-Starttest. Installer erzeugen, Hash dokumentieren, Quellcode in einem neuen privaten GitHub-Repository committen und pushen. Keine echten Finanzdaten oder Zugangsdaten committen.
 
 Qualität nicht bis zur letzten Phase aufschieben. Liefere eine klar abgegrenzte benutzbare Version und dokumentiere in STATUS.md vollständig/teilweise/offen. Arbeite selbstständig; gib nur tatsächlich ausgeführte Prüfungen als bestanden an. Verändere keine anderen Projekte. Ein öffentliches Hosting, Bankanbindung, externe KI-Übermittlung und kostenpflichtige Signierung sind ohne gesonderten Auftrag nicht umfasst.
+
+## iPhone-Distribution und Kursalarme
+
+Ergebnis: echte native iOS-17+-IPA für Sideloadly, ohne vorgegebene Apple-Zugangsdaten. Eigene Signierung erfolgt beim Nutzer. Pro Aktie Ab-/Bis-Zielwert, explizite Mitteilungsfreigabe und kein Wiederholen im erreichten Bereich; erneute Auslösung nach Verlassen. Optionale Onlinekurse über eigenen Twelve-Data-Schlüssel im Keychain, ohne Schlüssel in Exporten oder Logs. Hintergrundabrufe nur nach iOS-Verfügbarkeit, kein Versprechen dauerhafter Überwachung. Native Tests für exakte Schwellen, alte Backups, Persistenz, Abbruch und große Schrift ergänzen.

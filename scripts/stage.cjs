@@ -9,10 +9,10 @@ if(fs.existsSync(path.join(base,'public')))fs.cpSync(path.join(base,'public'),pa
 console.log('Desktop-Server vorbereitet.');
 const project=JSON.parse(fs.readFileSync(path.join(base,'package.json'),'utf8'));
 const desktop=path.join(base,'desktop-app');
-fs.mkdirSync(path.join(desktop,'desktop'),{recursive:true});
-fs.copyFileSync(path.join(base,'desktop/main.cjs'),path.join(desktop,'desktop/main.cjs'));
+fs.mkdirSync(path.join(desktop,'platforms/windows/desktop'),{recursive:true});
+fs.copyFileSync(path.join(base,'platforms/windows/desktop/main.cjs'),path.join(desktop,'platforms/windows/desktop/main.cjs'));
 project.build.electronVersion=JSON.parse(fs.readFileSync(path.join(base,'node_modules/electron/package.json'),'utf8')).version;
-project.build.directories.output=path.join(base,'release',project.version);
+project.build.directories.output=path.join(base,'release','windows',project.version);
 // electron-builder deliberately skips a root node_modules directory in generic
 // file matchers. Map it separately so the standalone runtime is self-contained.
 project.build.extraResources=[{from:target,to:'server'},{from:path.join(target,'node_modules'),to:'server/node_modules'}];

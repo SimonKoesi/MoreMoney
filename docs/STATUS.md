@@ -1,4 +1,6 @@
-# Funktionsstand 0.4
+# Funktionsstand 0.5
+
+Neu in 0.5: getrennte Plattformverzeichnisse für Windows und native iOS-App, entfernte Demo-Funktion sowie gezielte Bereinigung des alten Beispieldatensatzes mit Erhalt eigener Einträge. Responsive Prüfmatrix für kleine Displays, große Schrift und Textkollisionen. Echte macOS-Kompilierung und native Simulator-Tests; eine unsignierte IPA wird als eigenes Artefakt erzeugt. Die IPA ist für Sideloadly vorbereitet; signiert wird dort mit eigener Apple-ID. Native Funktionsunterschiede sind in platforms/ios/README.md beschrieben; keine automatische Synchronisierung.
 
 Neu in 0.4: persönliche Aktien-Watchlist mit Favoriten, Gruppen, Notizen, exakten Zielkursen und gespeichertem Kursverlauf. Manuelle Tageswerte funktionieren offline; optionaler Twelve-Data-Adapter für bewusste Einzelabrufe über eigenen Zugang. Die Watchlist wird mitgesichert und erzeugt keine Kontobuchungen. Details: [AKTIEN-WATCHLIST.md](AKTIEN-WATCHLIST.md).
 
@@ -28,3 +30,5 @@ Neu in 0.2: zweistufige Buchungserfassung mit Validierung und erhaltenen Eingabe
 JSON-Wiederherstellung und Importvorschau, CSV-Import, Moodboards, Wunschlistenmodul, Szenariovarianten, Vorlagenverwaltung, Beleg-/Garantieverwaltung, Vertragskündigungsfristen, Kalender und Benachrichtigungen, Unterkategorien, Massenbearbeitung, Unteraufgaben, Drag-and-drop, Undo, vollständige Finanzstatistiken, Nettoentwicklung, steuerjahrspezifisch verifizierter Brutto-Netto-Rechner, Mehrbenutzerbetrieb, Authentifizierung, Cloud-Synchronisierung, KI und automatische Updates.
 
 Diese Version priorisiert den nutzbaren lokalen Kern gemäß der Phasenregel des ursprünglichen Master-Prompts. Die offenen Bereiche sind keine funktionslosen Menüeinträge. Installer- und Laufzeitprüfung werden getrennt im Prüfprotokoll festgehalten.
+
+Native iOS-Kursalarme sind umgesetzt: Ab-/Bis-Schwelle, lokale Mitteilungen nach neuen Kurswerten, deduplizierter Bereichswechsel, optionaler Twelve-Data-Abruf und iOS-gesteuerte Hintergrundaktualisierung. Echtzeit-Push über Server, garantierte Abrufintervalle und physische iPhone-Installation sind nicht geprüft bzw. nicht enthalten.

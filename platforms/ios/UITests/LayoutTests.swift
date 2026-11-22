@@ -72,5 +72,30 @@ final class LayoutTests: XCTestCase {
         stocks.name = "LargeText-Stocks"
         stocks.lifetime = .keepAlways
         add(stocks)
+        app.staticTexts["Persönliche langfristige Aktienbeobachtung"].tap()
+        let alarm = app.buttons["Kursalarm einrichten"]
+        for _ in 0..<4 { if alarm.isHittable { break }; app.swipeUp() }
+        alarm.tap()
+        let target = app.textFields["alert-target"]
+        for _ in 0..<4 { if target.isHittable { break }; app.swipeUp() }
+        target.tap(); target.typeText("123,45")
+        let alertScreenshot = XCTAttachment(screenshot: app.screenshot())
+        alertScreenshot.name = "LargeText-AlertEditor"
+        alertScreenshot.lifetime = .keepAlways
+        add(alertScreenshot)
+        app.buttons["Abbrechen"].tap()
+        XCTAssertTrue(app.buttons["Kursalarm einrichten"].waitForExistence(timeout: 5))
+        app.buttons["Kursalarm einrichten"].tap()
+        let emptyTarget = app.textFields["alert-target"]
+        for _ in 0..<4 { if emptyTarget.isHittable { break }; app.swipeUp() }
+        XCTAssertEqual(emptyTarget.value as? String, "Zielkurs in EUR")
+        emptyTarget.tap(); emptyTarget.typeText("123,45")
+        app.buttons["Speichern"].tap()
+        XCTAssertTrue(app.buttons["Kursalarm einrichten"].waitForExistence(timeout: 5))
+        app.buttons["Kursalarm einrichten"].tap()
+        let restoredTarget = app.textFields["alert-target"]
+        for _ in 0..<4 { if restoredTarget.isHittable { break }; app.swipeUp() }
+        XCTAssertEqual(restoredTarget.value as? String, "123.45")
+        app.buttons["Abbrechen"].tap()
     }
 }

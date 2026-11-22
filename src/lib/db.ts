@@ -18,7 +18,7 @@ export function ready() {
     try {
       await client.execute('PRAGMA foreign_keys=ON');
       await client.execute('CREATE TABLE IF NOT EXISTS "_finova_migrations" ("id" TEXT PRIMARY KEY)');
-      for(const [id,folder] of [['001','001_init'],['002','002_watchlist']]){
+      for(const [id,folder] of [['001','001_init'],['002','002_watchlist'],['003','003_remove_demo']]){
         const result = await client.execute({sql:'SELECT id FROM _finova_migrations WHERE id=?',args:[id]});
         if (!result.rows.length) {
           const sql = readFileSync(path.join(process.cwd(), 'prisma/migrations',folder,'migration.sql'), 'utf8');

@@ -67,17 +67,7 @@ export async function POST(request: Request) {
       case 'recurring': await db.recurringPayment.create({data:{name:c.name,amountCents:c.amountCents,interval:c.interval,dueDate:c.dueDate}}); break;
       case 'deleteRecurring': await db.recurringPayment.delete({where:{id:c.id}}); break;
       case 'settings': await db.userSettings.update({where:{id:'local'},data:{theme:c.theme,reserveCents:c.reserveCents,widgets:c.widgets}}); break;
-      case 'demo': await db.$transaction(async tx=>{
-        if(await tx.account.count() || await tx.budget.count() || await tx.project.count()) throw new Error('Demo nur in einer leeren Datenbank laden.');
-        const a=await tx.account.create({data:{name:'Demo · Girokonto',openingCents:245000}});
-        const today=new Date().toISOString().slice(0,10);
-        await tx.transaction.create({data:{title:'Demo · Nettogehalt',kind:'income',amountCents:285000,date:today,accountId:a.id,requestId:crypto.randomUUID()}});
-        const b=await tx.budget.create({data:{name:'Demo · Zuhause',description:'Ein guter Platz für neue Ideen.',limitCents:250000,items:{create:[{name:'Sofa',plannedCents:89900,quantity:1,category:'Wohnen'},{name:'Leselampe',plannedCents:12900,quantity:1,category:'Licht'}]}}});
-        const item=await tx.budgetItem.findFirstOrThrow({where:{budgetId:b.id,name:'Sofa'}});
-        await tx.transaction.create({data:{title:'Demo · Sofa-Anzahlung',kind:'expense',amountCents:20000,date:today,accountId:a.id,budgetId:b.id,itemId:item.id,requestId:crypto.randomUUID()}});
-        await tx.savingsGoal.create({data:{name:'Demo · Kleine Auszeit',targetCents:180000,savedCents:62000}});
-        await tx.project.create({data:{name:'Demo · Zuhause gestalten',tasks:{create:[{name:'Maße nehmen',done:true},{name:'Liefertermine abstimmen'}]}}});
-      }); break;
+
     }
     return NextResponse.json(await state());
   } catch(error) {

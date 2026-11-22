@@ -1,4 +1,8 @@
-# MoreMoney 0.4.0 – Windows x64
+# MoreMoney 0.5.0 – Windows und iOS
+
+Demo-Funktion und vorinstallierte Beispieldaten entfernt. Migration 003 bereinigt die früher klar markierten Probeeinträge und erhält zusätzlich angelegte eigene Daten. Neue Plattformstruktur: platforms/windows und platforms/ios; Ausgaben nach Betriebssystem getrennt.
+
+Die native SwiftUI-App für iPhone/iPad wurde auf macOS tatsächlich kompiliert und getestet. MoreMoney-iOS-0.5.0-Sideloadly.ipa lässt sich mit Sideloadly und eigener Apple-ID signieren und installieren (iOS 17+). Bei kostenlosen Apple-IDs ist üblicherweise nach sieben Tagen eine neue Signierung nötig. Für TestFlight/Ad-Hoc/App Store sind eigenes Team und passende Signierung erforderlich. Keine automatische Synchronisierung; native Funktionsunterschiede stehen unter platforms/ios/README.md.
 
 Neue persönliche Aktien-Watchlist mit Favoriten, Gruppen, Notizen, Zielkursen und gespeichertem Kursdiagramm. Manuelle Kurse funktionieren offline. Ein eigener Twelve-Data-Zugang ermöglicht optionale Onlineabrufe; tatsächliche Echtzeitverfügbarkeit hängt vom Anbieter ab. Keine Kontobuchungen durch Watchlist-Einträge.
 
@@ -6,8 +10,10 @@ Umbenennung von FINOVA in MoreMoney mit dem bereitgestellten Waschbär-Icon für
 
 Lokaler Finanz- und Budgetplaner mit Konten, Buchungen, Transfers, Budgets und Teilzahlungen, Bildern/Links/Alternativen, Projekten, Sparzielen und transparenter Simulation.
 
-`MoreMoney-Setup-0.4.0.exe` herunterladen und starten. Keine separate Node.js-Installation erforderlich. Das Setup ist weiterhin nicht signiert, da noch kein Codesignatur-Zertifikat eingerichtet ist. Finanzdaten liegen außerhalb des Installationsordners unter `%APPDATA%/finova/data`.
+`MoreMoney-Setup-0.5.0.exe` herunterladen und starten. Keine separate Node.js-Installation erforderlich. Das Setup ist weiterhin nicht signiert, da noch kein Codesignatur-Zertifikat eingerichtet ist. Finanzdaten liegen außerhalb des Installationsordners unter `%APPDATA%/finova/data`.
 
 Textarme Oberfläche mit Buchungs-Stepper, Mobil-Dock, nativen Radiofiltern, zugänglichen Ansichtstabs und stabilen Aufgabencheckboxen. Reduzierte Bewegung und Transparenz werden respektiert. Keine Zählanimation für Geldbeträge.
 
 Dies ist die erste nutzbare Kernversion. Noch offen sind insbesondere Backup-Wiederherstellung/Import, Moodboards, Vertragsfristen, umfangreiche Szenarien und ein verifizierter Brutto-Netto-Rechner. Vollständiger Stand: docs/STATUS.md. Den Quellcode und die Prüfungen vor einem Einsatz mit wichtigen Finanzdaten prüfen und regelmäßige Backups erstellen.
+
+iOS-Kursalarme pro Aktie: Zielwert ab/bis, Systemfreigabe für Mitteilungen und Unterdrückung wiederholter Alarme im gleichen Bereich. Optionaler Twelve-Data-Zugang im iOS-Schlüsselbund. Hintergrundabrufe werden von iOS gesteuert und sind keine permanente Kursüberwachung. Keine Installation auf einem physischen iPhone geprüft; die Signierung mit eigener Apple-ID erfolgt in Sideloadly. Anleitung: platforms/ios/README.md.

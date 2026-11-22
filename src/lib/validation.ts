@@ -30,7 +30,6 @@ export const command = z.discriminatedUnion('op', [
   z.object({op:z.literal('recurring'), name:text, amountCents:amount.positive(), interval:z.enum(['weekly','monthly','quarterly','halfyearly','yearly']), dueDate:date}),
   z.object({op:z.literal('deleteRecurring'), id}),
   z.object({op:z.literal('settings'), theme:z.enum(['dark','light']), reserveCents:amount, widgets:z.string().max(200)}),
-  z.object({op:z.literal('demo')}),
 ]);
 export function sameOrigin(request: Request) {
   const origin = request.headers.get('origin');
