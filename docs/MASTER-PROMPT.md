@@ -27,7 +27,11 @@ Ruhiges Navy/Anthrazit mit einem Türkis-Akzent, konsistente Abstände, systemna
 
 MagicBento-Muster für responsive Übersichten; Dock-Prinzip für konsistente Hauptnavigation; RubberSegment für direkte Ansichtswechsel; JellyRadio für Einzelauswahlfilter; SpringCheck für echte unabhängige Checkboxzustände; Folder-Prinzip für Budgets/Projekte. Kein Zwang, alle elf Bausteine einzubauen: CodeSlots hat ohne Authentifizierungsablauf keinen Zweck, ein HoldButton ist für gewöhnliche Aktionen ungeeignet. Effekte bleiben kurz und optional; native Semantik, Tastatur und reduzierte Bewegung gehen vor Dekoration.
 
+Stand 0.2: Stepper für längere Buchungen, natives JellyRadio, RubberSegment mit verknüpftem Tabpanel/Pfeiltasten und SpringCheck im vorhandenen React-Stack tatsächlich integrieren. Die mobile Hauptnavigation nutzt Dock/GlassSurface mit echten Hash-Routen, Safe Area und aktiver Markierung nach Direktaufruf/Zurück. Bestehendes MagicBento und Folder erhalten. Keine dekorative Nachbildung eines Verifizierungs- oder Datenlöschablaufs.
+
 Alle sichtbaren Aktionen müssen funktionieren. Sinnvolle Leerzustände und optional ausdrücklich gekennzeichnete Demodaten. Keine erfundenen Kennzahlen, funktionslosen Navigationspunkte oder vorgetäuschten Premiumfunktionen. Entwürfe bleiben bei Validierungs-/Speicherfehlern erhalten. Bilder serverseitig anhand Dateisignatur, Typ und Größe prüfen; UUID-Dateinamen und kontrollierte Speicherpfade verwenden.
+
+Zusätzliche ausdrückliche Designvorgabe: möglichst wenig Text im Programm. Keine dekorativen Einleitungen, Eyebrows, wiederholten Slogans oder technischen Implementierungsbeschreibungen. Kurze Aktionsnamen, räumliche Gruppierung und native Zustände tragen den Ablauf. Nur notwendige Feldlabels, Status-/Fehlermeldungen und finanzielle Annahmen bleiben sichtbar. Details bei Bedarf aufklappen. Kurze Opazitäts-/Farbwechsel geben sofort Rückmeldung, ohne Eingaben zu blockieren. Keine automatischen Schleifen, Zählanimationen oder bewegten Hintergründe; reduzierte Bewegung deaktiviert Animationen.
 
 ## Umsetzung in überprüfbaren Phasen
 

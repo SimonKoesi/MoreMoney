@@ -20,6 +20,10 @@ test('persistenter Finanzablauf, Bilder, Teilzahlungen und unabhängige Checklis
   let data=await(await request.get('/api/state')).json();expect(data.transactions).toHaveLength(0);
   for(const amount of ['200','800']){
     await page.getByRole('button',{name:'Zahlung erfassen',exact:true}).click();await page.getByLabel('Betrag in EUR',{exact:true}).fill(amount);
+    await page.getByRole('button',{name:'Weiter',exact:true}).click();
+    await page.getByRole('button',{name:'Zurück',exact:true}).click();
+    await expect(page.getByLabel('Betrag in EUR',{exact:true})).toHaveValue(amount);
+    await page.getByRole('button',{name:'Weiter',exact:true}).click();
     await page.getByRole('button',{name:'Speichern',exact:true}).click();await expect(page.getByRole('dialog')).toHaveCount(0);
   }
   data=await(await request.get('/api/state')).json();expect(data.transactions).toHaveLength(2);expect(data.transactions.reduce((s:number,t:{amountCents:number})=>s+t.amountCents,0)).toBe(100000);
@@ -27,7 +31,7 @@ test('persistenter Finanzablauf, Bilder, Teilzahlungen und unabhängige Checklis
   await page.locator('.item-actions summary').click();
   await page.locator('input[type=file]').setInputFiles({name:'test.png',mimeType:'image/png',buffer:await sharp({create:{width:100,height:80,channels:3,background:'#68ddc1'}}).png().toBuffer()});
   await expect(page.locator('.product-images img')).toHaveCount(1);
-  await page.reload();await page.getByRole('button',{name:/Wohnung.*Positionen/}).click();
+  await page.reload();await expect(page.locator('h1')).toHaveText('Wohnung');
   await expect(page.getByLabel('Sofa',{exact:true})).toBeChecked();
   await page.setViewportSize({width:390,height:844});await expect(page.locator('h1')).toHaveText('Wohnung');
   await expect(page.locator('body')).toHaveJSProperty('scrollWidth',390);
@@ -35,6 +39,43 @@ test('persistenter Finanzablauf, Bilder, Teilzahlungen und unabhängige Checklis
   await page.setViewportSize({width:1440,height:1050});
   await page.getByRole('button',{name:'Dashboard',exact:true}).click();
   await page.screenshot({path:'test-results/dashboard.png',fullPage:true});
+});
+
+test('Bausteine: Stepper, Radiogruppe, Tabs, Dock und reduzierte Bewegung',async({page,request})=>{
+  await page.emulateMedia({reducedMotion:'reduce'});
+  await page.goto('/#/transactions');
+  await page.getByRole('radio',{name:'Einnahmen',exact:true}).check();
+  await expect(page.getByRole('radio',{name:'Einnahmen',exact:true})).toBeChecked();
+  await expect(page.getByText('Noch keine Buchungen in dieser Ansicht.')).toBeVisible();
+  await page.getByRole('button',{name:'Buchung erfassen',exact:true}).click();
+  await expect(page.locator('.dialog-content')).toHaveCSS('animation-name','none');
+  await page.getByRole('button',{name:'Weiter',exact:true}).click();
+  await expect(page.getByLabel('Bezeichnung',{exact:true})).toBeFocused();
+  await expect(page.getByRole('combobox',{name:'Konto',exact:true})).toHaveCount(0);
+  await page.getByLabel('Bezeichnung',{exact:true}).fill('Nicht speichern');
+  await page.getByLabel('Betrag in EUR',{exact:true}).fill('12,34');
+  await page.getByRole('button',{name:'Weiter',exact:true}).click();
+  await expect(page.getByRole('combobox',{name:'Konto',exact:true})).toBeVisible();
+  await page.getByRole('button',{name:'Abbrechen',exact:true}).click();
+  const state=await(await request.get('/api/state')).json();
+  expect(state.transactions.some((t:{title:string})=>t.title==='Nicht speichern')).toBe(false);
+  await page.goto('/#/budgets/'+state.budgets[0].id);
+  await page.getByRole('tab',{name:'Liste',exact:true}).click();
+  await page.keyboard.press('ArrowRight');
+  await expect(page.getByRole('tab',{name:'Galerie',exact:true})).toHaveAttribute('aria-selected','true');
+  await expect(page.getByRole('tabpanel')).toBeVisible();
+  await page.keyboard.press('End');
+  await expect(page.getByRole('tab',{name:'Kanban',exact:true})).toHaveAttribute('aria-selected','true');
+  await page.goto('/#/dashboard');
+  await page.setViewportSize({width:390,height:844});
+  const dock=page.getByRole('navigation',{name:'Schnellnavigation'});
+  await dock.getByRole('button',{name:'Budgets',exact:true}).click();
+  await expect(dock.getByRole('button',{name:'Budgets',exact:true})).toHaveAttribute('aria-current','page');
+  await page.goBack();
+  await expect(page.locator('h1')).toHaveText('Dashboard');
+  await expect(dock.getByRole('button',{name:'Übersicht',exact:true})).toHaveAttribute('aria-current','page');
+  await page.emulateMedia({reducedMotion:'no-preference'});
+  await page.screenshot({path:'test-results/elements-mobile.png',fullPage:true});
 });
 
 test('API: Idempotenz, Transfers, Zugriffsschutz und vollständiges Bildbackup',async({request})=>{

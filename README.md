@@ -1,6 +1,6 @@
 # FINOVA für Windows
 
-Lokaler Finanz-, Budget- und Projektplaner. Zielartefakt: `release/FINOVA-Setup-0.1.0.exe` für Windows x64. Ohne Cloud-Konto, Bankanbindung oder externe KI. Der Installer enthält die Laufzeit; Endnutzer brauchen kein Node.js.
+Lokaler Finanz-, Budget- und Projektplaner. Zielartefakt: `release/0.2.0/FINOVA-Setup-0.2.0.exe` für Windows x64. Ohne Cloud-Konto, Bankanbindung oder externe KI. Der Installer enthält die Laufzeit; Endnutzer brauchen kein Node.js.
 
 ## Benutzen
 

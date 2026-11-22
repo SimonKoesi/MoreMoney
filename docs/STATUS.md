@@ -1,4 +1,6 @@
-# Funktionsstand 0.1
+# Funktionsstand 0.2
+
+Neu in 0.2: zweistufige Buchungserfassung mit Validierung und erhaltenen Eingaben, Dock für Mobilnavigation, direkte Budget-/Bereichsrouten mit Zurücknavigation, native Radiofilter, vollständig tastaturbedienbare Budgettabs und wiederverwendbare Aufgabencheckboxen. Oberfläche gestrafft; ausführliche Prognoseannahmen aufklappbar. Bausteinauswahl: [ELEMENTE-EVALUIERUNG.md](ELEMENTE-EVALUIERUNG.md).
 
 ## Implementiert
 

@@ -3,6 +3,7 @@ const path = require('node:path');
 const net = require('node:net');
 const crypto = require('node:crypto');
 let window, server;
+if(process.env.FINOVA_TEST_DATA)app.setPath('userData',path.dirname(process.env.FINOVA_TEST_DATA));
 const lock=app.requestSingleInstanceLock();
 if(!lock) app.quit();
 app.on('second-instance',()=>{if(window){if(window.isMinimized())window.restore();window.focus();}});

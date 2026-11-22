@@ -12,7 +12,7 @@ const desktop=path.join(base,'desktop-app');
 fs.mkdirSync(path.join(desktop,'desktop'),{recursive:true});
 fs.copyFileSync(path.join(base,'desktop/main.cjs'),path.join(desktop,'desktop/main.cjs'));
 project.build.electronVersion=JSON.parse(fs.readFileSync(path.join(base,'node_modules/electron/package.json'),'utf8')).version;
-project.build.directories.output=path.join(base,'release');
+project.build.directories.output=path.join(base,'release',project.version);
 // electron-builder deliberately skips a root node_modules directory in generic
 // file matchers. Map it separately so the standalone runtime is self-contained.
 project.build.extraResources=[{from:target,to:'server'},{from:path.join(target,'node_modules'),to:'server/node_modules'}];
