@@ -32,3 +32,5 @@ JSON-Wiederherstellung und Importvorschau, CSV-Import, Moodboards, Wunschlistenm
 Diese Version priorisiert den nutzbaren lokalen Kern gemäß der Phasenregel des ursprünglichen Master-Prompts. Die offenen Bereiche sind keine funktionslosen Menüeinträge. Installer- und Laufzeitprüfung werden getrennt im Prüfprotokoll festgehalten.
 
 Native iOS-Kursalarme sind umgesetzt: Ab-/Bis-Schwelle, lokale Mitteilungen nach neuen Kurswerten, deduplizierter Bereichswechsel, optionaler Twelve-Data-Abruf und iOS-gesteuerte Hintergrundaktualisierung. Echtzeit-Push über Server, garantierte Abrufintervalle und physische iPhone-Installation sind nicht geprüft bzw. nicht enthalten.
+
+Neu: Namensvorschläge für Aktien und ETFs, automatische Kursbeobachtung über eigenen Twelve-Data-Zugang und Ratenkäufe/Darlehen mit festem Sollzins, Tilgungsplan, Zinsanteilen und Restschuld. Bestätigte Ratenzahlungen werden ohne Duplikate gebucht; das Anlegen allein verändert keinen Kontostand. Profilblock „Mein persönlicher Bereich“ entfernt. Details: docs/FINANZIERUNGEN.md und docs/AKTIEN-WATCHLIST.md.

@@ -1,10 +1,10 @@
 'use client';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { format } from 'date-fns';
 import { Star, Plus, Search, Pencil, Trash2, RefreshCw, ChevronLeft, TrendingUp } from 'lucide-react';
 import { Line, LineChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import type { AppState } from '@/lib/db';
-import { changePercent, currencies, priceInput, stockMoney, targetReached } from '@/lib/stocks';
+import { type SecuritySuggestion, changePercent, currencies, priceInput, stockMoney, targetReached } from '@/lib/stocks';
 import { Dialog } from './ui/dialog';
 import { JellyRadio } from './ui/elements';
 
@@ -16,14 +16,27 @@ function StockEditor({editor,save,close}:{editor:Editor;save:(values:Values)=>Pr
   const s=editor.stock;
   const [values,setValues]=useState<Values>({name:s?.name||'',symbol:s?.symbol||'',exchange:s?.exchange||'',currency:s?.currency||'EUR',group:s?.group||'',note:s?.note||'',target:priceInput(s?.targetMicros||null),targetDirection:s?.targetDirection||'below',price:'',asOf:format(new Date(),'yyyy-MM-dd')});
   const [busy,setBusy]=useState(false),[error,setError]=useState('');const lock=useRef(false);
+  const [suggestions,setSuggestions]=useState<SecuritySuggestion[]>([]),[searchError,setSearchError]=useState('');
+  const [query,setQuery]=useState('');
+  useEffect(()=>{
+    if(query.trim().length<2||editor.kind!=='stock'||s)return;
+    const abort=new AbortController();let active=true;
+    const timer=setTimeout(async()=>{
+      try{const response=await fetch('/api/stocks/search?q='+encodeURIComponent(query),{signal:abort.signal});const body=await response.json();if(!response.ok)throw new Error(body.error);if(active){setSuggestions(body.results);setSearchError(body.results.length?'':'Keine passenden Aktien oder ETFs.');}}
+      catch(e){if(active&&!abort.signal.aborted){setSuggestions([]);setSearchError(e instanceof Error?e.message:'Suche fehlgeschlagen.');}}
+    },350);
+    return()=>{active=false;clearTimeout(timer);abort.abort();};
+  },[query,editor.kind,s]);
   const field=(key:keyof Values,value:string)=>setValues(previous=>({...previous,[key]:value}));
-  return <Dialog title={editor.kind==='quote'?'Kurs erfassen':s?'Aktie bearbeiten':'Aktie hinzufügen'} onClose={()=>{if(!lock.current)close();}}>
+  return <Dialog title={editor.kind==='quote'?'Kurs erfassen':s?'Aktie bearbeiten':'Aktie oder ETF hinzufügen'} onClose={()=>{if(!lock.current)close();}}>
     <form onSubmit={async event=>{event.preventDefault();if(lock.current)return;lock.current=true;setBusy(true);setError('');try{await save(values);close();}catch(e){setError(e instanceof Error?e.message:'Speichern fehlgeschlagen.');}finally{lock.current=false;setBusy(false);}}}>
       <div className="form-fields">{editor.kind==='quote'?<>
         <label>Kurs in {s?.currency}<input autoFocus required value={values.price} inputMode="decimal" onChange={e=>field('price',e.target.value)} maxLength={20}/></label>
         <label>Handelstag<input type="date" required value={values.asOf} max={format(new Date(),'yyyy-MM-dd')} onChange={e=>field('asOf',e.target.value)}/></label>
       </>:<>
-        <label>Name<input autoFocus required maxLength={120} value={values.name} onChange={e=>field('name',e.target.value)}/></label>
+        <label>Name<input autoFocus required maxLength={120} value={values.name} onChange={e=>{field('name',e.target.value);setSuggestions([]);setSearchError('');setQuery(e.target.value);}}/></label>
+        {searchError&&<p role="status" className="muted">{searchError}</p>}
+        {suggestions.length>0&&<ul className="security-suggestions" aria-label="Aktien und ETF Vorschläge">{suggestions.map(v=><li key={v.symbol+v.exchange+v.currency}><button type="button" onClick={()=>{setValues(previous=>({...previous,name:v.name,symbol:v.symbol,exchange:v.exchange,currency:v.currency}));setQuery('');setSuggestions([]);}}><strong>{v.name}</strong><span>{v.symbol} · {v.exchange} · {v.type} · {v.currency}</span></button></li>)}</ul>}
         <div className="stock-form-row"><label>Symbol<input required readOnly={Boolean(s?.quotes.length)} maxLength={25} value={values.symbol} onChange={e=>field('symbol',e.target.value.toUpperCase())} placeholder="z. B. AAPL"/></label>
         <label>Währung<select disabled={Boolean(s?.quotes.length)} value={values.currency} onChange={e=>field('currency',e.target.value)}>{currencies.map(c=><option key={c}>{c}</option>)}</select></label></div>
         <div className="stock-form-row"><label>Börse · optional<input readOnly={Boolean(s?.quotes.length)} maxLength={40} value={values.exchange} onChange={e=>field('exchange',e.target.value)}/></label>
@@ -42,6 +55,23 @@ export function Stocks({data,onChange}:{data:AppState;onChange:(data:AppState)=>
   const [filter,setFilter]=useState('all'),[search,setSearch]=useState(''),[group,setGroup]=useState(''),[selected,setSelected]=useState<string|null>(null);
   const [editor,setEditor]=useState<Editor|null>(null),[busy,setBusy]=useState(false),[error,setError]=useState('');
   const lock=useRef(false);
+  const ids=data.stocks.map(s=>s.id).join(',');
+  const refreshed=useRef(new Map<string,number>());
+  useEffect(()=>{
+    if(!data.quoteProviderAvailable||!ids)return;
+    const abort=new AbortController();let active=true;
+    async function tick(){
+      if(lock.current||document.visibilityState==='hidden')return;
+      const id=ids.split(',').find(id=>Date.now()-(refreshed.current.get(id)||0)>=300_000);
+      if(!id)return;
+      lock.current=true;refreshed.current.set(id,Date.now());
+      try{const response=await fetch('/api/stocks',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'refresh',id}),signal:abort.signal});const body=await response.json();if(active){if(response.ok)onChange(body);else setError(body.error||'Kursabruf fehlgeschlagen.');}}
+      catch{if(active)setError('Automatischer Kursabruf fehlgeschlagen. Erneut abrufen.');}
+      finally{lock.current=false;}
+    }
+    void tick();const timer=setInterval(()=>void tick(),10_000);
+    return()=>{active=false;clearInterval(timer);abort.abort();};
+  },[ids,data.quoteProviderAvailable,onChange]);
   async function mutate(payload:Record<string,unknown>){
     if(lock.current)throw new Error('Bitte laufenden Vorgang abwarten.');
     lock.current=true;setBusy(true);setError('');

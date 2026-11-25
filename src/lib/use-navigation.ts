@@ -1,7 +1,7 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-const destinations = new Set(['dashboard', 'accounts', 'transactions', 'recurring', 'goals', 'stocks', 'budgets', 'projects', 'simulator', 'settings']);
+const destinations = new Set(['dashboard', 'accounts', 'transactions', 'recurring', 'installments', 'goals', 'stocks', 'budgets', 'projects', 'simulator', 'settings']);
 type Route = { page: string; selectedBudget: string | null };
 function readRoute(): Route {
   const [page, id] = window.location.hash.replace(/^#\/?/, '').split('/');

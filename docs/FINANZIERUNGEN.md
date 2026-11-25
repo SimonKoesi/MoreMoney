@@ -1,0 +1,13 @@
+# Ratenkäufe und Darlehen
+
+Unter Raten & Darlehen → Finanzierung hinzufügen die Art wählen. Windows und iOS speichern eigenständig; kein automatischer Abgleich.
+
+Ratenkauf: Gesamtpreis einschließlich vereinbarter Zinsen/Gebühren, Anzahlung, Monatsrate und erste Fälligkeit. Anzahlung ist als eigene Zahlung am ersten Termin geplant. Schlussrate wird exakt auf den verbleibenden Centbetrag begrenzt; höchstens 600 Monatsraten. Fälligkeiten am Monatsende springen im Februar auf den letzten Kalendertag und kehren danach zum ursprünglichen Tag zurück.
+
+Darlehen: Darlehensbetrag, fester jährlicher Sollzins mit bis zu zwei Nachkommastellen, Laufzeit bis 600 Monate und erster Zahlungstermin. Modell eines vollständig innerhalb der gewählten Laufzeit getilgten Annuitätendarlehens: Monatszins = Sollzins / 12, Zinsen jeden Monat kaufmännisch auf Cent gerundet. Eine Ganzzahlsuche ermittelt die kleinste konstante Cent-Rate, die innerhalb der Laufzeit tilgt. Die letzte Rate kann kleiner ausfallen. Zinsen gesamt, Zins-/Tilgungsanteil jeder Rate und Restschuld laut Plan werden getrennt angezeigt. Nominalzins wird nicht als Effektivzins bezeichnet.
+
+Ohne Gebühren, variable Zinsen, taggenaue Zinstage, Karenz, verspätete Zahlung oder Sondertilgung. Bankverträge können anders rechnen. Für bestehende Kredite den aktuellen Restbetrag und die verbleibende Laufzeit als neuen Ausgangspunkt verwenden. Kein automatischer Geldeingang: eine tatsächlich erfolgte Darlehensauszahlung bei Bedarf separat als Buchung erfassen.
+
+Anlegen eines Plans verändert kein Konto. Zahlung erfassen wählt Konto und tatsächliches Zahlungsdatum, Buchen bestätigt genau eine Ausgabe in Höhe der gewählten Rate. Wiederholungen derselben Ratenzahlung erzeugen keine zweite Buchung. Eine gelöschte Zahlung öffnet die Rate wieder. Pläne mit Zahlungen lassen sich nicht löschen. Restschuld ist ursprüngliches Kapital minus Tilgungsanteile bestätigter Zahlungen, nicht die Summe künftiger Zinsen. Offene Zahlbeträge einschließlich planmäßiger Zinsen sind separat sichtbar. Windows berücksichtigt diese offenen Verpflichtungen in den offenen Plänen; nicht zusätzlich denselben Kauf als Budgetposition eintragen, um eine doppelte Planung zu vermeiden.
+
+Berechnungsgrundlagen: [Volksbanken Raiffeisenbanken – Annuitätendarlehen](https://www.vr.de/privatkunden/produkte/baufinanzierung/annuitaetendarlehen.html), [Commerzbank – Erläuterungen zu Verbraucherdarlehen](https://www.commerzbank.de/hinweise/digitale-barrierefreiheit/allgemein-verbraucherdarlehensvertrag/). Die genaue Cent-Rundung oben ist die hier implementierte Modellannahme.

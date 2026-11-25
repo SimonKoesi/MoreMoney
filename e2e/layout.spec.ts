@@ -38,7 +38,7 @@ test('kleine Displays, lange Namen, große Schrift und flache Dialoge',async({pa
     for(const scale of ['100%','150%','200%']){
       await page.goto('/#/dashboard');await expect(page.locator('h1')).toHaveText('Dashboard');
       await page.evaluate(value=>document.documentElement.style.fontSize=value,scale);
-      for(const route of ['dashboard','accounts','transactions','budgets','projects','goals','stocks','recurring','simulator','settings','budgets/'+budget.id]){
+      for(const route of ['dashboard','accounts','transactions','budgets','projects','goals','stocks','recurring','installments','simulator','settings','budgets/'+budget.id]){
         await page.evaluate(value=>{location.hash='#/'+value;},route);
         await expect(page.locator('main h1')).toBeVisible();
         await page.waitForTimeout(40);

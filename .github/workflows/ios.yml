@@ -5,11 +5,14 @@ on:
     paths:
       - 'platforms/ios/**'
       - '.github/workflows/ios.yml'
+concurrency:
+  group: moremoney-ios-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
   ios:
-    runs-on: macos-15
+    runs-on: macos-15-intel
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
@@ -27,6 +30,7 @@ jobs:
           cd ../../release/ios
           zip -qr MoreMoney-unsigned.ipa Payload
           shasum -a 256 MoreMoney-unsigned.ipa > SHA256SUMS.txt
+          python3 ../../scripts/verify-ipa.py MoreMoney-unsigned.ipa
       - name: Select small iPhone simulator
         run: |
           python3 - <<'PY'

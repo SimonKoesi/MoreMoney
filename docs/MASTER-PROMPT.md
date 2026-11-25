@@ -54,3 +54,5 @@ Qualität nicht bis zur letzten Phase aufschieben. Liefere eine klar abgegrenzte
 ## iPhone-Distribution und Kursalarme
 
 Ergebnis: echte native iOS-17+-IPA für Sideloadly, ohne vorgegebene Apple-Zugangsdaten. Eigene Signierung erfolgt beim Nutzer. Pro Aktie Ab-/Bis-Zielwert, explizite Mitteilungsfreigabe und kein Wiederholen im erreichten Bereich; erneute Auslösung nach Verlassen. Optionale Onlinekurse über eigenen Twelve-Data-Schlüssel im Keychain, ohne Schlüssel in Exporten oder Logs. Hintergrundabrufe nur nach iOS-Verfügbarkeit, kein Versprechen dauerhafter Überwachung. Native Tests für exakte Schwellen, alte Backups, Persistenz, Abbruch und große Schrift ergänzen.
+
+Neu: Namensvorschläge für Aktien und ETFs, automatische Kursbeobachtung über eigenen Twelve-Data-Zugang und Ratenkäufe/Darlehen mit festem Sollzins, Tilgungsplan, Zinsanteilen und Restschuld. Bestätigte Ratenzahlungen werden ohne Duplikate gebucht; das Anlegen allein verändert keinen Kontostand. Profilblock „Mein persönlicher Bereich“ entfernt. Details: docs/FINANZIERUNGEN.md und docs/AKTIEN-WATCHLIST.md.

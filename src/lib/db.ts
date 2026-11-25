@@ -18,7 +18,7 @@ export function ready() {
     try {
       await client.execute('PRAGMA foreign_keys=ON');
       await client.execute('CREATE TABLE IF NOT EXISTS "_finova_migrations" ("id" TEXT PRIMARY KEY)');
-      for(const [id,folder] of [['001','001_init'],['002','002_watchlist'],['003','003_remove_demo']]){
+      for(const [id,folder] of [['001','001_init'],['002','002_watchlist'],['003','003_remove_demo'],['004','004_installments'],['005','005_loans']]){
         const result = await client.execute({sql:'SELECT id FROM _finova_migrations WHERE id=?',args:[id]});
         if (!result.rows.length) {
           const sql = readFileSync(path.join(process.cwd(), 'prisma/migrations',folder,'migration.sql'), 'utf8');
@@ -33,13 +33,14 @@ export function ready() {
 
 export async function state() {
   await ready();
-  const [accounts, transactions, budgets, projects, goals, recurring, settings, stocks] = await Promise.all([
+  const [accounts, transactions, budgets, projects, goals, recurring, settings, stocks, installments] = await Promise.all([
     db.account.findMany({ orderBy: {createdAt:'asc'} }),
     db.transaction.findMany({ orderBy: [{date:'desc'}, {createdAt:'desc'}] }),
     db.budget.findMany({ include: {items: {include: {links:true, images:true, alternatives:true}, orderBy:{createdAt:'asc'}}}, orderBy:{createdAt:'asc'} }),
     db.project.findMany({include:{tasks:true}}), db.savingsGoal.findMany(), db.recurringPayment.findMany(), db.userSettings.findUniqueOrThrow({where:{id:'local'}}),
-    db.watchStock.findMany({orderBy:[{favorite:'desc'},{name:'asc'}],include:{quotes:{orderBy:[{asOf:'asc'},{updatedAt:'asc'}]}}})
+    db.watchStock.findMany({orderBy:[{favorite:'desc'},{name:'asc'}],include:{quotes:{orderBy:[{asOf:'asc'},{updatedAt:'asc'}]}}}),
+    db.installmentPurchase.findMany({orderBy:{createdAt:'asc'}})
   ]);
-  return { accounts, transactions, budgets, projects, goals, recurring, settings, stocks, quoteProviderAvailable:Boolean(process.env.MOREMONEY_TWELVE_DATA_KEY) };
+  return { accounts, transactions, budgets, projects, goals, recurring, settings, stocks, installments, quoteProviderAvailable:Boolean(process.env.MOREMONEY_TWELVE_DATA_KEY) };
 }
 export type AppState = Awaited<ReturnType<typeof state>>;

@@ -1,3 +1,4 @@
+import { installmentSchedule, loanSchedule } from '@/lib/installments';
 import { db, ready, state } from '@/lib/db';
 import { command, sameOrigin } from '@/lib/validation';
 import { NextResponse } from 'next/server';
@@ -66,6 +67,29 @@ export async function POST(request: Request) {
       case 'contribute': await db.savingsGoal.update({where:{id:c.id},data:{savedCents:{increment:c.amountCents}}}); break;
       case 'recurring': await db.recurringPayment.create({data:{name:c.name,amountCents:c.amountCents,interval:c.interval,dueDate:c.dueDate}}); break;
       case 'deleteRecurring': await db.recurringPayment.delete({where:{id:c.id}}); break;
+      case 'loan': {
+        const rows=loanSchedule(c.principalCents,c.interestBps,c.termMonths,c.firstDueDate);
+        const {op:_,...data}=c;void _;
+        await db.installmentPurchase.upsert({where:{id:c.id},create:{...data,totalCents:rows.reduce((s,r)=>s+r.amountCents,0),rateCents:rows[0].amountCents,downPaymentCents:0},update:{}});break;
+      }
+      case 'installment': {
+        installmentSchedule(c);
+        const {op:_,...data}=c;void _;
+        await db.installmentPurchase.upsert({where:{id:c.id},create:data,update:{}});break;
+      }
+      case 'payInstallment': await db.$transaction(async tx=>{
+        const purchase=await tx.installmentPurchase.findUniqueOrThrow({where:{id:c.id}});
+        const due=installmentSchedule(purchase).find(row=>row.index===c.index);
+        if(!due)throw new Error('Rate nicht gefunden.');
+        if(c.date>new Date().toISOString().slice(0,10))throw new Error('Nur bereits erfolgte Zahlungen buchen.');
+        if(await tx.transaction.findUnique({where:{installmentId_installmentIndex:{installmentId:c.id,installmentIndex:c.index}}}))return;
+        const account=await tx.account.findUniqueOrThrow({where:{id:c.accountId}});
+        if(account.archived)throw new Error('Aktives Konto wählen.');
+        await tx.transaction.create({data:{requestId:'installment-'+c.id+'-'+c.index,title:purchase.name+' · '+(c.index===0?'Anzahlung':'Rate '+c.index),amountCents:due.amountCents,kind:'expense',date:c.date,accountId:c.accountId,installmentId:c.id,installmentIndex:c.index}});
+      });break;
+      case 'deleteInstallment':
+        if(await db.transaction.count({where:{installmentId:c.id}}))throw new Error('Ratenkauf hat Zahlungen und bleibt erhalten.');
+        await db.installmentPurchase.delete({where:{id:c.id}});break;
       case 'settings': await db.userSettings.update({where:{id:'local'},data:{theme:c.theme,reserveCents:c.reserveCents,widgets:c.widgets}}); break;
 
     }

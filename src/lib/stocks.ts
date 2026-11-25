@@ -53,3 +53,10 @@ export function parseProviderQuote(value:unknown,stock:{symbol:string;exchange:s
   const asOf=day.parse(data.datetime.slice(0,10));
   return {priceMicros:priceMicros(data.close),asOf};
 }
+
+export type SecuritySuggestion={symbol:string;name:string;exchange:string;currency:typeof currencies[number];type:string};
+export function parseSuggestions(input:unknown):SecuritySuggestion[]{
+ const reply=z.object({data:z.array(z.object({symbol:z.string().max(25),instrument_name:z.string().max(120),exchange:z.string().max(40),currency:z.string(),instrument_type:z.string()})).max(100)}).parse(input);
+ const seen=new Set<string>();
+ return reply.data.filter(v=>['Common Stock','ETF','REIT','Depositary Receipt'].includes(v.instrument_type)&&currencies.includes(v.currency as typeof currencies[number])&&/^[A-Z0-9][A-Z0-9.^:-]{0,24}$/.test(v.symbol)&&/^[A-Z0-9 ._-]{0,40}$/i.test(v.exchange)).flatMap(v=>{const key=v.symbol+':'+v.exchange+':'+v.currency;if(seen.has(key))return [];seen.add(key);return [{symbol:v.symbol,name:v.instrument_name,exchange:v.exchange.toUpperCase(),currency:v.currency as typeof currencies[number],type:v.instrument_type}];}).slice(0,12);
+}

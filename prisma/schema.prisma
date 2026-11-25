@@ -33,10 +33,14 @@ model Transaction {
   budget       Budget?  @relation(fields: [budgetId], references: [id], onDelete: Restrict)
   itemId       String?
   item         BudgetItem? @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  installmentId String?
+  installmentIndex Int?
+  installment InstallmentPurchase? @relation(fields: [installmentId], references: [id], onDelete: Restrict)
   transferId   String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   @@index([date])
+  @@unique([installmentId, installmentIndex])
 }
 
 model Budget {
@@ -177,4 +181,19 @@ model StockQuote {
   updatedAt    DateTime @updatedAt
   @@unique([stockId, source, asOf])
   @@index([stockId, asOf])
+}
+
+model InstallmentPurchase {
+  id String @id @default(uuid())
+  name String
+  totalCents Int
+  principalCents Int?
+  interestBps Int?
+  termMonths Int?
+  downPaymentCents Int @default(0)
+  rateCents Int
+  firstDueDate String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  transactions Transaction[]
 }

@@ -29,6 +29,10 @@ export const command = z.discriminatedUnion('op', [
   z.object({op:z.literal('contribute'), id, amountCents:amount.positive()}),
   z.object({op:z.literal('recurring'), name:text, amountCents:amount.positive(), interval:z.enum(['weekly','monthly','quarterly','halfyearly','yearly']), dueDate:date}),
   z.object({op:z.literal('deleteRecurring'), id}),
+  z.object({op:z.literal('loan'),id,name:text,principalCents:amount.positive(),interestBps:z.number().int().min(0).max(10000),termMonths:z.number().int().min(1).max(600),firstDueDate:date}),
+  z.object({op:z.literal('installment'),id,name:text,totalCents:amount.positive(),downPaymentCents:amount,rateCents:amount.positive(),firstDueDate:date}),
+  z.object({op:z.literal('payInstallment'),id,index:z.number().int().min(0).max(600),accountId:id,date}),
+  z.object({op:z.literal('deleteInstallment'),id}),
   z.object({op:z.literal('settings'), theme:z.enum(['dark','light']), reserveCents:amount, widgets:z.string().max(200)}),
 ]);
 export function sameOrigin(request: Request) {

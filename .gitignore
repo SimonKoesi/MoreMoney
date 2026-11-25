@@ -25,3 +25,7 @@ build/*.xcresult/
 *.p12
 
 platforms/ios/Info.plist
+
+build/loan-mobile.png
+build/ios-review/
+build/ios-artifacts/

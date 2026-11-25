@@ -46,3 +46,5 @@ Die Plattformen synchronisieren noch nicht automatisch. iOS besitzt einen benutz
 
 Backups regelmäßig lokal exportieren. Keine Bankanbindung, keine automatische Übertragung an KI und kein ungefragtes Cloud-Hosting.
 Die iOS-IPA kann über Sideloadly mit eigener Apple-ID signiert und installiert werden (iOS 17+). Individuelle Kursalarme, sichere API-Schlüsselablage und optionale iOS-Hintergrundabrufe: [iPhone-Anleitung](platforms/ios/README.md#sideloadly-und-kursalarme).
+
+Neu: Namensvorschläge für Aktien und ETFs, automatische Kursbeobachtung über eigenen Twelve-Data-Zugang und Ratenkäufe/Darlehen mit festem Sollzins, Tilgungsplan, Zinsanteilen und Restschuld. Bestätigte Ratenzahlungen werden ohne Duplikate gebucht; das Anlegen allein verändert keinen Kontostand. Profilblock „Mein persönlicher Bereich“ entfernt. Details: docs/FINANZIERUNGEN.md und docs/AKTIEN-WATCHLIST.md.
