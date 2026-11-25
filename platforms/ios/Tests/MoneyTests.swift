@@ -2,6 +2,13 @@ import XCTest
 @testable import MoreMoney
 
 final class MoneyTests: XCTestCase {
+    @MainActor func testPushRelayRequiresAnHTTPSOrigin() {
+        XCTAssertEqual(RemotePush.endpoint("https://example.invalid")?.absoluteString, "https://example.invalid/v1/device")
+        XCTAssertNil(RemotePush.endpoint("http://example.invalid"))
+        XCTAssertNil(RemotePush.endpoint("https://example.invalid/path"))
+        XCTAssertNil(RemotePush.endpoint("https://name:password@example.invalid"))
+        XCTAssertNil(RemotePush.endpoint("https://example.invalid/?token=test"))
+    }
     func testExactMoney() throws {
         XCTAssertEqual(try Money.parse("0,10") + Money.parse("0,20"), 30)
         XCTAssertEqual(try Money.parse("0,000001", decimals: 6), 1)

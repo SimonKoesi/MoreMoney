@@ -375,6 +375,7 @@ struct SettingsView: View {
     var body: some View {
         Form {
             NavigationLink("Raten & Darlehen") { InstallmentList() }
+            NavigationLink("Kursalarme per Push") { PushSettings() }
             Section { Label("Lokal auf diesem Gerät", systemImage: "lock.shield"); Text("MoreMoney 0.5").foregroundStyle(.secondary) }
             Section("Aktienkurse · Twelve Data") {
                 SecureField("Eigener API-Schlüssel", text: $key).textInputAutocapitalization(.never).autocorrectionDisabled()

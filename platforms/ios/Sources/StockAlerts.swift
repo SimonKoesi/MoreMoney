@@ -28,15 +28,16 @@ enum QuoteFailure: LocalizedError {
 }
 
 enum QuoteKey {
-    private static var query: [String: Any] { [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: "de.moremoney.quotes", kSecAttrAccount as String: "twelvedata"] }
-    static func read() -> String {
-        var request = query
+    private static func query(_ account: String) -> [String: Any] { [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: "de.moremoney.quotes", kSecAttrAccount as String: account] }
+    static func read(account: String = "twelvedata") -> String {
+        var request = query(account)
         request[kSecReturnData as String] = true
         var result: CFTypeRef?
         guard SecItemCopyMatching(request as CFDictionary, &result) == errSecSuccess, let data = result as? Data else { return "" }
         return String(data: data, encoding: .utf8) ?? ""
     }
-    static func save(_ value: String) throws {
+    static func save(_ value: String, account: String = "twelvedata") throws {
+        let query = query(account)
         let cleaned = value.trimmingCharacters(in: .whitespacesAndNewlines)
         if cleaned.isEmpty {
             let status = SecItemDelete(query as CFDictionary)
@@ -120,7 +121,7 @@ enum QuoteClient {
                   quote.date >= (stock.alertConfiguredAt ?? .distantPast) else { continue }
             let inside = AlertRule.inside(price: quote.amount, target: stock.amount, below: stock.alertBelow == true)
             do {
-                if AlertRule.shouldNotify(stock, quote: quote) {
+                if AlertRule.shouldNotify(stock, quote: quote) && !(quote.source == "Twelve Data" && RemotePush.shared.handlesMarketAlert(stock)) {
                     let settings = await UNUserNotificationCenter.current().notificationSettings()
                     guard [.authorized, .provisional, .ephemeral].contains(settings.authorizationStatus) else { continue }
                     let content = UNMutableNotificationContent()
