@@ -29,6 +29,9 @@ struct MoneyRecord: Codable, Identifiable, Equatable {
     var rateCents: Int64? = nil
     var downPaymentCents: Int64? = nil
     var installmentIndex: Int? = nil
+    var principalCents: Int64? = nil
+    var interestBps: Int64? = nil
+    var termMonths: Int? = nil
 }
 
 enum MoneyError: LocalizedError {
@@ -148,9 +151,9 @@ enum Money {
         return (paid, open, budget.amount - paid - open)
     }
     func payInstallment(_ purchase: MoneyRecord, index: Int, accountID: UUID, date: Date) throws {
-        guard let current = records.first(where: { $0.id == purchase.id && $0.kind == .installment }),
-              let due = try Installments.schedule(current).first(where: { $0.index == index }),
-              items(.account).contains(where: { $0.id == accountID }) else { throw MoneyError.invalidAmount }
+        guard items(.account).contains(where: { $0.id == accountID }) else { throw MoneyError.missingAccount }
+        guard date <= Date(), let current = records.first(where: { $0.id == purchase.id && $0.kind == .installment }),
+              let due = try Installments.schedule(current).first(where: { $0.index == index }) else { throw MoneyError.invalidAmount }
         if records.contains(where: { $0.kind == .transaction && $0.parentID == purchase.id && $0.installmentIndex == index }) { return }
         try save(MoneyRecord(kind: .transaction, name: purchase.name + " · " + (index == 0 ? "Anzahlung" : "Rate " + String(index)), amount: -due.amount, parentID: purchase.id, accountID: accountID, date: date, installmentIndex: index))
     }

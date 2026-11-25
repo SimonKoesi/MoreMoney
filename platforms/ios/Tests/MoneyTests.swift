@@ -128,4 +128,16 @@ final class MoneyTests: XCTestCase {
         XCTAssertThrowsError(try store.remove(purchase))
         XCTAssertThrowsError(try store.payInstallment(purchase, index: 99, accountID: account.id, date: Date()))
     }
+    func testLoanInterestPrincipalAndZeroInterest() throws {
+        let date = ISO8601DateFormatter().date(from: "2026-01-31T12:00:00Z")!
+        let rows = try Installments.loan(principal: 100000, bps: 1200, months: 2, date: date)
+        XCTAssertEqual(rows.map(\.amount), [50752, 50750])
+        XCTAssertEqual(rows.map(\.interest), [1000, 502])
+        XCTAssertEqual(rows.map(\.principal), [49752, 50248])
+        XCTAssertEqual(rows.last?.balance, 0)
+        XCTAssertEqual(try Installments.loan(principal: 100001, bps: 0, months: 3, date: date).map(\.amount), [33334, 33334, 33333])
+        XCTAssertThrowsError(try Installments.loan(principal: 100000, bps: -1, months: 12, date: date))
+        XCTAssertThrowsError(try Installments.loan(principal: 100000, bps: 1200, months: 601, date: date))
+        XCTAssertThrowsError(try Installments.loan(principal: 2_000_000_000, bps: 10000, months: 600, date: date))
+    }
 }

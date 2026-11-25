@@ -220,6 +220,7 @@ struct AlertEditor: View {
                 }
             }.navigationTitle("Kursalarm").navigationBarTitleDisplayMode(.inline)
                 .toolbar {
+                    ToolbarItemGroup(placement: .keyboard) { Spacer(); Button("Fertig") { UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil) } }
                     ToolbarItem(placement: .cancellationAction) { Button("Abbrechen") { dismiss() }.disabled(saving) }
                     ToolbarItem(placement: .confirmationAction) {
                         Button("Speichern") {
@@ -300,6 +301,7 @@ struct RecordEditor: View {
                 if !error.isEmpty { Text(error).foregroundStyle(.red).fixedSize(horizontal: false, vertical: true) }
             }.navigationTitle("Eintrag hinzufügen").navigationBarTitleDisplayMode(.inline)
                 .toolbar {
+                    ToolbarItemGroup(placement: .keyboard) { Spacer(); Button("Fertig") { UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil) } }
                     ToolbarItem(placement: .cancellationAction) { Button("Abbrechen") { dismiss() }.disabled(saving) }
                     ToolbarItem(placement: .confirmationAction) { Button("Speichern") { save() }.disabled(saving).accessibilityIdentifier("save-record") }
                 }

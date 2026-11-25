@@ -68,6 +68,7 @@ final class LayoutTests: XCTestCase {
         app.buttons["Aktie hinzufügen"].tap()
         let stockName = app.textFields["record-name"].exists ? app.textFields["record-name"] : app.textViews["record-name"]
         stockName.tap(); stockName.typeText("Persönliche langfristige Aktienbeobachtung")
+        if app.buttons["Fertig"].firstMatch.isHittable { app.buttons["Fertig"].firstMatch.tap() }
         let symbol = app.textFields["Symbol"]
         for _ in 0..<4 { if symbol.isHittable { break }; app.swipeUp() }
         symbol.tap(); symbol.typeText("LONGSTOCK")
@@ -118,6 +119,7 @@ final class LayoutTests: XCTestCase {
             let field = app.textFields[id].exists ? app.textFields[id] : app.textViews[id]
             for _ in 0..<6 { if field.isHittable { break }; app.swipeUp() }
             XCTAssertTrue(field.isHittable); field.tap(); field.typeText(value)
+            if app.buttons["Fertig"].firstMatch.isHittable { app.buttons["Fertig"].firstMatch.tap() }
         }
         fill("installment-name", "Meine langfristige Anschaffung auf Raten")
         fill("installment-total", "1000,01")
