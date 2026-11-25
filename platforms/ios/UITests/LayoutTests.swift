@@ -115,15 +115,26 @@ final class LayoutTests: XCTestCase {
         app.tabBars.buttons["Mehr"].tap()
         app.buttons["Raten & Darlehen"].tap()
         app.buttons["Finanzierung hinzufügen"].tap()
-        func fill(_ id: String, _ value: String) {
-            let field = app.textFields[id].exists ? app.textFields[id] : app.textViews[id]
-            for _ in 0..<6 { if field.isHittable { break }; app.swipeUp() }
-            XCTAssertTrue(field.isHittable); field.tap(); field.typeText(value)
+        func fill(_ fields: XCUIElementQuery, _ id: String, _ value: String) throws {
+            let field = fields[id]
+            for _ in 0..<8 {
+                if field.exists && field.isHittable { break }
+                let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.7))
+                let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.45))
+                start.press(forDuration: 0.05, thenDragTo: end)
+            }
+            let visibleField = try XCTUnwrap(field.exists && field.isHittable ? field : nil, "Feld nicht erreichbar: \(id)")
+            visibleField.tap()
+            visibleField.typeText(value)
             if app.buttons["Fertig"].firstMatch.isHittable { app.buttons["Fertig"].firstMatch.tap() }
         }
-        fill("installment-name", "Meine langfristige Anschaffung auf Raten")
-        fill("installment-total", "1000,01")
-        fill("installment-rate", "300")
+        let nameFields = app.descendants(matching: .any).matching(NSPredicate(format: "identifier == %@", "installment-name"))
+        let name = nameFields.element(boundBy: 0)
+        XCTAssertTrue(name.waitForExistence(timeout: 5))
+        let nameQuery = name.elementType == .textView ? app.textViews : app.textFields
+        try fill(nameQuery, "installment-name", "Meine langfristige Anschaffung auf Raten")
+        try fill(app.textFields, "installment-total", "1000,01")
+        try fill(app.textFields, "installment-rate", "300")
         app.buttons["Speichern"].tap()
         let title = app.staticTexts["Meine langfristige Anschaffung auf Raten · Restbetrag"]
         XCTAssertTrue(title.waitForExistence(timeout: 5))
@@ -134,6 +145,10 @@ final class LayoutTests: XCTestCase {
         app.buttons["Buchen"].tap()
         let error = app.alerts["Zahlung nicht gebucht"]
         XCTAssertTrue(error.staticTexts["Bitte ein vorhandenes Konto wählen."].waitForExistence(timeout: 10))
+        let validation = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        validation.name = "LargeText-InstallmentValidation"
+        validation.lifetime = .keepAlways
+        add(validation)
         error.buttons["OK"].tap()
         app.buttons["Abbrechen"].tap()
         Thread.sleep(forTimeInterval: 1)

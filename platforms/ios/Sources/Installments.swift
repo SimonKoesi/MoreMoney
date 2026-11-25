@@ -151,7 +151,9 @@ struct InstallmentDetail: View {
             AmountRow(label: "Offen", amount: purchase.amount + payments.reduce(Int64(0)) { $0 + $1.amount })
             ForEach((try? Installments.schedule(purchase)) ?? []) { due in
                 VStack(alignment: .leading, spacing: 8) {
-                    AmountRow(label: (due.index == 0 ? "Anzahlung" : "Rate " + String(due.index)) + " · " + due.date.formatted(date: .numeric, time: .omitted), amount: due.amount)
+                    let dateLabel = due.date.formatted(.dateTime.day(.twoDigits).month(.twoDigits).year().locale(Locale(identifier: "de_DE")))
+                    let rateLabel = due.index == 0 ? "Anzahlung" : "Rate \(due.index)"
+                    AmountRow(label: "\(rateLabel) · \(dateLabel)", amount: due.amount)
                     if purchase.principalCents != nil {
                         AmountRow(label: "Zinsen", amount: due.interest)
                         AmountRow(label: "Tilgung", amount: due.principal)
