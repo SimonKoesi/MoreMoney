@@ -72,8 +72,8 @@ struct InstallmentList: View {
                 }
             }
             if store.items(.installment).isEmpty { Text("Noch keine Ratenkäufe").foregroundStyle(.secondary) }
-        }.navigationTitle("Ratenkäufe").navigationBarTitleDisplayMode(.inline)
-            .toolbar { Button { add = true } label: { Image(systemName: "plus") }.accessibilityLabel("Ratenkauf hinzufügen") }
+        }.navigationTitle("Raten & Darlehen").navigationBarTitleDisplayMode(.inline)
+            .toolbar { Button { add = true } label: { Image(systemName: "plus") }.accessibilityLabel("Finanzierung hinzufügen") }
             .sheet(isPresented: $add) { InstallmentEditor() }
     }
 }
@@ -107,7 +107,7 @@ struct InstallmentEditor: View {
                 DatePicker("Erste Fälligkeit", selection: $date, displayedComponents: .date)
                 Text("Anzahlung am ersten Termin. Zahlungen einzeln bestätigen.").font(.footnote)
                 if !error.isEmpty { Text(error).foregroundStyle(.red) }
-            }.navigationTitle("Ratenkauf").navigationBarTitleDisplayMode(.inline).toolbar {
+            }.navigationTitle("Finanzierung").navigationBarTitleDisplayMode(.inline).toolbar {
                 ToolbarItemGroup(placement: .keyboard) { Spacer(); Button("Fertig") { UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil) } }
                 ToolbarItem(placement: .cancellationAction) { Button("Abbrechen") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {

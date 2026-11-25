@@ -374,7 +374,7 @@ struct SettingsView: View {
     @State private var keyMessage = ""
     var body: some View {
         Form {
-            NavigationLink("Ratenkäufe") { InstallmentList() }
+            NavigationLink("Raten & Darlehen") { InstallmentList() }
             Section { Label("Lokal auf diesem Gerät", systemImage: "lock.shield"); Text("MoreMoney 0.5").foregroundStyle(.secondary) }
             Section("Aktienkurse · Twelve Data") {
                 SecureField("Eigener API-Schlüssel", text: $key).textInputAutocapitalization(.never).autocorrectionDisabled()

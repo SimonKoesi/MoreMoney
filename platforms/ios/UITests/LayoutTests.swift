@@ -113,8 +113,8 @@ final class LayoutTests: XCTestCase {
         app.launchArguments += ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
         app.launch()
         app.tabBars.buttons["Mehr"].tap()
-        app.buttons["Ratenkäufe"].tap()
-        app.buttons["Ratenkauf hinzufügen"].tap()
+        app.buttons["Raten & Darlehen"].tap()
+        app.buttons["Finanzierung hinzufügen"].tap()
         func fill(_ id: String, _ value: String) {
             let field = app.textFields[id].exists ? app.textFields[id] : app.textViews[id]
             for _ in 0..<6 { if field.isHittable { break }; app.swipeUp() }
