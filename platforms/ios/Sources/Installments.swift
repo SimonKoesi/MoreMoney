@@ -167,15 +167,21 @@ struct InstallmentDetail: View {
                         AmountRow(label: due.index == 0 ? "Anzahlung" : "Rate " + String(due.index), amount: due.amount)
                         Picker("Konto", selection: $account) { Text("Konto wählen").tag(nil as UUID?); ForEach(store.items(.account)) { Text($0.name).tag(Optional($0.id)) } }
                         DatePicker("Bezahlt am", selection: $date, in: ...Date(), displayedComponents: .date)
-                        if !error.isEmpty { Text(error).foregroundStyle(.red) }
                     }.navigationTitle("Zahlung").navigationBarTitleDisplayMode(.inline).toolbar {
                         ToolbarItemGroup(placement: .keyboard) { Spacer(); Button("Fertig") { UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil) } }
-                ToolbarItem(placement: .cancellationAction) { Button("Abbrechen") { paying = nil } }
+                        ToolbarItem(placement: .cancellationAction) { Button("Abbrechen") { paying = nil } }
                         ToolbarItem(placement: .confirmationAction) { Button("Buchen") {
                             guard !saving else { return }; saving = true
                             do { guard let account else { throw MoneyError.missingAccount }; try store.payInstallment(purchase, index: due.index, accountID: account, date: date); paying = nil }
                             catch { self.error = error.localizedDescription }; saving = false
                         }.disabled(saving) }
+                    }.alert("Zahlung nicht gebucht", isPresented: Binding(
+                        get: { !error.isEmpty },
+                        set: { if !$0 { error = "" } }
+                    )) {
+                        Button("OK") { error = "" }
+                    } message: {
+                        Text(error)
                     }
                 }
             }

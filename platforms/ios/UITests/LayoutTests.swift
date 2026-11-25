@@ -132,7 +132,9 @@ final class LayoutTests: XCTestCase {
         XCTAssertTrue(app.buttons["Zahlung erfassen"].firstMatch.isHittable)
         app.buttons["Zahlung erfassen"].firstMatch.tap()
         app.buttons["Buchen"].tap()
-        XCTAssertTrue(app.staticTexts["Bitte ein vorhandenes Konto wählen."].waitForExistence(timeout: 5))
+        let error = app.alerts["Zahlung nicht gebucht"]
+        XCTAssertTrue(error.staticTexts["Bitte ein vorhandenes Konto wählen."].waitForExistence(timeout: 10))
+        error.buttons["OK"].tap()
         app.buttons["Abbrechen"].tap()
         Thread.sleep(forTimeInterval: 1)
         let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
