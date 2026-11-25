@@ -1,7 +1,7 @@
 const {spawn}=require('node:child_process');
 const fs=require('node:fs');const os=require('node:os');const path=require('node:path');
 const version=require('../package.json').version;
-const executable=path.resolve('release','windows',version,'win-unpacked/MoreMoney.exe');
+const executable=process.env.MOREMONEY_SMOKE_EXE||path.resolve('release','windows',version,'win-unpacked/MoreMoney.exe');
 const directory=fs.mkdtempSync(path.join(os.tmpdir(),'finova-desktop-test-'));
 async function run(index, binary=executable, expectedTitle='MoreMoney'){
   const resultFile=path.join(directory,`result-${index}.json`);

@@ -81,7 +81,7 @@ export async function POST(request: Request) {
         const purchase=await tx.installmentPurchase.findUniqueOrThrow({where:{id:c.id}});
         const due=installmentSchedule(purchase).find(row=>row.index===c.index);
         if(!due)throw new Error('Rate nicht gefunden.');
-        if(c.date>new Date().toISOString().slice(0,10))throw new Error('Nur bereits erfolgte Zahlungen buchen.');
+        if(c.date>new Date().toLocaleDateString('sv-SE'))throw new Error('Nur bereits erfolgte Zahlungen buchen.');
         if(await tx.transaction.findUnique({where:{installmentId_installmentIndex:{installmentId:c.id,installmentIndex:c.index}}}))return;
         const account=await tx.account.findUniqueOrThrow({where:{id:c.accountId}});
         if(account.archived)throw new Error('Aktives Konto wählen.');

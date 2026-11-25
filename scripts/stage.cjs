@@ -12,7 +12,9 @@ const desktop=path.join(base,'desktop-app');
 fs.mkdirSync(path.join(desktop,'platforms/windows/desktop'),{recursive:true});
 fs.copyFileSync(path.join(base,'platforms/windows/desktop/main.cjs'),path.join(desktop,'platforms/windows/desktop/main.cjs'));
 project.build.electronVersion=JSON.parse(fs.readFileSync(path.join(base,'node_modules/electron/package.json'),'utf8')).version;
-project.build.directories.output=path.join(base,'release','windows',project.version);
+const suffix=process.env.MOREMONEY_BUILD_SUFFIX||'';
+if(!/^[a-z0-9-]*$/.test(suffix))throw new Error('Invalid build folder suffix');
+project.build.directories.output=path.join(base,'release','windows',project.version,suffix);
 // electron-builder deliberately skips a root node_modules directory in generic
 // file matchers. Map it separately so the standalone runtime is self-contained.
 project.build.extraResources=[{from:target,to:'server'},{from:path.join(target,'node_modules'),to:'server/node_modules'}];
