@@ -1,0 +1,7 @@
+import {readTextBounded} from '@/lib/request-body';
+import {NextResponse} from 'next/server';
+import {sameOrigin} from '@/lib/validation';
+import {securityAction,securityStatus} from '@/lib/local-security';
+export const runtime='nodejs';
+export async function GET(request:Request){try{return NextResponse.json(await securityStatus(request),{headers:{'Cache-Control':'no-store'}});}catch{return NextResponse.json({error:'Lokaler Sicherheitsstatus konnte nicht geladen werden.'},{status:503});}}
+export async function POST(request:Request){if(!sameOrigin(request))return NextResponse.json({error:'Nicht erlaubt.'},{status:403});try{const text=await readTextBounded(request,5000);if(text.length>5000)throw new Error('Anfrage zu groß.');const result=await securityAction(request,JSON.parse(text));const {token,clearCookie,...body}=result as typeof result&{clearCookie?:boolean;token?:string};const response=NextResponse.json(body);response.headers.set('Cache-Control','no-store');if(token)response.cookies.set('moremoney-session',token,{httpOnly:true,sameSite:'strict',secure:new URL(request.url).protocol==='https:',path:'/',maxAge:86400});if(clearCookie)response.cookies.set('moremoney-session','',{httpOnly:true,sameSite:'strict',path:'/',maxAge:0});return response;}catch(e){const message=e instanceof Error?e.message:'';return NextResponse.json({error:message.length<180&&/^(Bitte|Passphrase|Lokaler|Zugang|Zu viele|Anmeldung|Wiederherstellung|Sperrzeit|G?ltigen|Best?tigung|Aktion|Anfrage)/.test(message)?message:'Sicherheitsaktion fehlgeschlagen.'},{status:400});}}

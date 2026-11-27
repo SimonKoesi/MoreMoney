@@ -157,19 +157,5 @@ enum Money {
         if records.contains(where: { $0.kind == .transaction && $0.parentID == purchase.id && $0.installmentIndex == index }) { return }
         try save(MoneyRecord(kind: .transaction, name: purchase.name + " · " + (index == 0 ? "Anzahlung" : "Rate " + String(index)), amount: -due.amount, parentID: purchase.id, accountID: accountID, date: date, installmentIndex: index))
     }
-    func setAlert(_ id: UUID, target: Int64, below: Bool, enabled: Bool) throws {
-        guard var stock = records.first(where: { $0.id == id && $0.kind == .stock }), target > 0 || !enabled else { throw MoneyError.invalidAmount }
-        stock.amount = target
-        stock.alertsEnabled = enabled
-        stock.alertBelow = below
-        stock.alertInside = false
-        stock.alertConfiguredAt = Date()
-        try save(stock)
-    }
-    func markAlert(_ id: UUID, inside: Bool) throws {
-        guard var stock = records.first(where: { $0.id == id && $0.kind == .stock }) else { return }
-        stock.alertInside = inside
-        try save(stock)
-    }
     func backup() throws -> Data { try JSONEncoder().encode(records) }
 }

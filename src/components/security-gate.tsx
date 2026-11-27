@@ -1,0 +1,16 @@
+'use client';
+import {useEffect,useState,type ReactNode} from 'react';
+import {LockKeyhole} from 'lucide-react';
+export type SecurityStatus={configured:boolean;locked:boolean;inactivityMinutes:number;mfa:boolean;keyProtection:string;sessions:{id:string;created:number;lastSeen:number;expires:number;current:boolean}[];events:{event:string;outcome:string;at:number}[]};
+export function SecurityGate({children}:{children:ReactNode}){
+ const [status,setStatus]=useState<SecurityStatus|null>(null),[password,setPassword]=useState(''),[code,setCode]=useState(''),[recover,setRecover]=useState(false),[error,setError]=useState(''),[busy,setBusy]=useState(false);
+ async function load(){try{const response=await fetch('/api/privacy/session',{cache:'no-store'});if(!response.ok)throw new Error();setStatus(await response.json());setError('');}catch{setError('Sicherheitsstatus nicht verfügbar. Erneut versuchen.');}}
+ useEffect(()=>{const initial=setTimeout(()=>void load(),0);const timer=setInterval(()=>void load(),30000);window.addEventListener('moremoney-security',load);let last=0;const activity=()=>{if(Date.now()-last<30000)return;last=Date.now();void fetch('/api/privacy/session',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'heartbeat'})});};window.addEventListener('pointerdown',activity);window.addEventListener('keydown',activity);return()=>{clearTimeout(initial);clearInterval(timer);window.removeEventListener('moremoney-security',load);window.removeEventListener('pointerdown',activity);window.removeEventListener('keydown',activity);};},[]);
+ if(!status)return <main className="loading"><LockKeyhole/><p>{error||'Sicherheitsstatus wird geprüft …'}</p>{error&&<button className="secondary" onClick={()=>void load()}>Erneut versuchen</button>}</main>;
+ if(!status.locked)return children;
+ return <main className="security-screen"><form className="panel" onSubmit={async event=>{event.preventDefault();if(busy)return;setBusy(true);setError('');try{const response=await fetch('/api/privacy/session',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:recover?'recover':'login',password,code})});const result=await response.json();if(!response.ok)throw new Error(result.error);setPassword('');setCode('');await load();}catch(e){setError(e instanceof Error?e.message:'Entsperren fehlgeschlagen.');}finally{setBusy(false);}}}>
+  <LockKeyhole/><h1>MoreMoney entsperren</h1><label>{recover?'Neue Passphrase':'Passphrase'}<input autoFocus required type="password" autoComplete={recover?'new-password':'current-password'} minLength={recover?12:1} maxLength={256} value={password} onChange={e=>setPassword(e.target.value)}/></label>
+  {(status.mfa||recover)&&<label>{recover?'Wiederherstellungscode':'Authenticator- oder Wiederherstellungscode'}<input required value={code} autoComplete="one-time-code" onChange={e=>setCode(e.target.value)}/></label>}
+  {error&&<p role="alert" className="form-error">{error}</p>}<button className="primary" disabled={busy}>{busy?'Wird geprüft …':'Entsperren'}</button><button type="button" className="text-button" onClick={()=>{setRecover(!recover);setError('');}}>{recover?'Zur Anmeldung':'Zugang wiederherstellen'}</button>
+ </form></main>;
+}

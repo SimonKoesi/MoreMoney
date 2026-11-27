@@ -2,7 +2,7 @@
 
 Eigenständige native SwiftUI-App für iOS 17+, lokal nutzbar ohne Cloud-Konto und ohne Beispieldaten. Quellen unter Sources, Modelltests unter Tests, native Layout-/Persistenztests unter UITests. XcodeGen erzeugt aus project.yml das Xcode-Projekt.
 
-Enthalten: Konten, Buchungen, atomare Umbuchungen, Fixkosten-Planwerte, Budgets/Positionen mit Teilzahlungen und unabhängigen Aufgaben, Projekte, Sparziele, Aktien-Watchlist mit Favoriten, Kursdiagramm und individuellen Kursalarmen, lokaler JSON-Backup-Export. Die iOS-Version speichert eigenständig im geschützten Application-Support-Verzeichnis. Es gibt noch keine Synchronisierung und keinen Import des Windows-Datenformats. Produktbilder/-alternativen und der Windows-Simulator sind noch nicht als native Module enthalten.
+Enthalten: Konten, Buchungen, atomare Umbuchungen, Fixkosten-Planwerte, Budgets/Positionen mit Teilzahlungen und unabhängigen Aufgaben, Projekte, Sparziele, lokaler JSON-Backup-Export. Die iOS-Version speichert eigenständig im geschützten Application-Support-Verzeichnis. Es gibt noch keine Synchronisierung und keinen Import des Windows-Datenformats. Produktbilder/-alternativen und der Windows-Simulator sind noch nicht als native Module enthalten.
 
 Native Lists, Forms, NavigationStack und TabView berücksichtigen Bildschirmtastatur, Safe Areas, Dynamic Type und unterschiedliche iPhone-/iPadgrößen. Texte umbrechen; Geldbeträge werden unter Labels statt in engen, festen Spalten dargestellt. Keine unnötigen Layoutanimationen und keine Demonstrationsdaten beim Start.
 
@@ -20,17 +20,4 @@ In Xcode ein eigenes Team auswählen und die Bundle-ID bei Bedarf anpassen. Für
 
 Windows kann diesen nativen iOS-Code nicht mit Xcode kompilieren oder einen iPhone-Simulator ausführen. Das Prüfprotokoll unterscheidet deshalb lokale Browserprüfungen von tatsächlich auf macOS ausgeführten nativen Tests. Native UI-Tests erzeugen ihre eigenen isolierten Datensätze, nie Daten in der produktiven App.
 
-## Sideloadly und Kursalarme
-
-Die unsignierte IPA ist für die erneute Signierung durch Sideloadly vorbereitet. Sie benötigt iOS 17 oder neuer. Kein bezahlter Developer-Zugang erforderlich; kostenlose Apple-IDs müssen typischerweise alle sieben Tage neu signieren. Die Apple-ID nur in Sideloadly eingeben.
-
-1. Aktuelle Sideloadly-Version von https://sideloadly.io/ installieren.
-2. iPhone per USB verbinden, entsperren und dem Computer vertrauen.
-3. MoreMoney-iOS-0.5.0-Sideloadly.ipa in Sideloadly öffnen, Gerät und eigene Apple-ID auswählen, Start drücken.
-4. Auf dem iPhone bei Bedarf unter Allgemein → VPN und Geräteverwaltung dem Entwickler vertrauen und den von iOS verlangten Entwicklermodus aktivieren.
-
-Aktie öffnen → Kursalarm einrichten → Zielkurs, Ab/Bis und Benachrichtigung speichern. iOS fragt nach der Erlaubnis. Automatische Abrufe benötigen einen eigenen Twelve-Data-Schlüssel unter Mehr; der Schlüssel bleibt im Geräte-Schlüsselbund und fehlt in Backups. Symbole und Zugang werden nur an Twelve Data geschickt. Kein eigener Push-Server, keine permanente Überwachung: iOS bestimmt die Hintergrundabrufe (angefragt frühestens nach 30 Minuten); Beenden der App, Energiesparmodus oder deaktivierte Hintergrundaktualisierung können sie verhindern. Anbieterlimits und verzögerte Kurse gelten. Manuell gespeicherte neue Kurse prüfen den Alarm ebenfalls. Ein Alarm erfolgt einmal pro erreichtem Bereich, danach erst wieder nach Verlassen und erneutem Erreichen. Neue Einstellungen gelten nur für anschließend erfasste Kurse. Alarme sind keine verlässliche Handelsautomatisierung.
-
-Lokale Finanzdaten sind ab der ersten Geräteentsperrung geschützt verfügbar, damit erlaubte Hintergrundabrufe den Stand lesen können. Keine Push-Entitlements nötig, daher auch mit kostenloser Sideloadly-Signierung verwendbar. Installation auf einem physischen iPhone und das tatsächliche iOS-Hintergrundverhalten müssen am Gerät geprüft werden.
-
-Unter Mehr → Raten & Darlehen stehen Ratenkäufe mit Anzahlung/Schlussrate und Darlehen mit festem Sollzins, Laufzeit, Monatsrate, Zins-/Tilgungsanteilen und Restschuld zur Verfügung. Anlegen erzeugt keine Buchung; Zahlungen einzeln bestätigen. Modell und Grenzen: ../../docs/FINANZIERUNGEN.md. Aktien- und ETF-Vorschläge übernehmen Name, Symbol, Börse und Währung. Kurse werden mit eigenem Zugang beim Öffnen und frühestens alle fünf Minuten im Vordergrund abgerufen, zehn Sekunden Abstand zwischen Instrumenten.
+Die Aktienfunktionen sind aus dem aktuellen iOS-Quellcode entfernt. Historische Einträge bleiben für lokale Backups lesbar.

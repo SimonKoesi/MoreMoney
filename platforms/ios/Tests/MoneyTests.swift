@@ -2,13 +2,6 @@ import XCTest
 @testable import MoreMoney
 
 final class MoneyTests: XCTestCase {
-    @MainActor func testPushRelayRequiresAnHTTPSOrigin() {
-        XCTAssertEqual(RemotePush.endpoint("https://example.invalid")?.absoluteString, "https://example.invalid/v1/device")
-        XCTAssertNil(RemotePush.endpoint("http://example.invalid"))
-        XCTAssertNil(RemotePush.endpoint("https://example.invalid/path"))
-        XCTAssertNil(RemotePush.endpoint("https://name:password@example.invalid"))
-        XCTAssertNil(RemotePush.endpoint("https://example.invalid/?token=test"))
-    }
     func testExactMoney() throws {
         XCTAssertEqual(try Money.parse("0,10") + Money.parse("0,20"), 30)
         XCTAssertEqual(try Money.parse("0,000001", decimals: 6), 1)
@@ -63,56 +56,13 @@ final class MoneyTests: XCTestCase {
         XCTAssertEqual(try Data(contentsOf: url), original)
         try FileManager.default.removeItem(at: folder)
     }
-    func testThresholdsAndDuplicateSuppression() throws {
-        var stock = MoneyRecord(kind: .stock, name: "Eigene Aktie", amount: 100_000_000, alertsEnabled: true, alertBelow: false, alertConfiguredAt: Date(timeIntervalSince1970: 10))
-        var quote = MoneyRecord(kind: .quote, name: "Kurs", amount: 100_000_000, date: Date(timeIntervalSince1970: 20))
-        XCTAssertTrue(AlertRule.shouldNotify(stock, quote: quote))
-        stock.alertInside = true
-        XCTAssertFalse(AlertRule.shouldNotify(stock, quote: quote))
-        stock.alertInside = false
-        quote.amount -= 1
-        XCTAssertFalse(AlertRule.shouldNotify(stock, quote: quote))
-        stock.alertBelow = true
-        XCTAssertTrue(AlertRule.shouldNotify(stock, quote: quote))
-        quote.date = Date(timeIntervalSince1970: 5)
-        XCTAssertFalse(AlertRule.shouldNotify(stock, quote: quote))
-        stock.alertsEnabled = false
-        XCTAssertFalse(AlertRule.shouldNotify(stock, quote: quote))
-    }
-    func testQuoteValidationAndOldBackupCompatibility() throws {
+    func testLegacyBackupCompatibility() throws {
         let stock = MoneyRecord(kind: .stock, name: "Eigene Aktie", symbol: "OWN", currency: "USD")
-        let valid = Data(#"{"symbol":"OWN","currency":"USD","close":"12.000001","timestamp":100}"#.utf8)
-        let quote = try QuoteClient.parse(valid, stock: stock)
-        XCTAssertEqual(quote.amount, 12_000_001)
-        XCTAssertEqual(quote.source, "Twelve Data")
-        XCTAssertThrowsError(try QuoteClient.parse(Data(#"{"symbol":"OWN","currency":"EUR","close":"12","timestamp":100}"#.utf8), stock: stock))
-        XCTAssertThrowsError(try QuoteClient.parse(Data(#"{"status":"error","message":"limit"}"#.utf8), stock: stock))
         var dictionary = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(stock)) as? [String: Any])
         for key in ["alertsEnabled", "alertBelow", "alertInside", "alertConfiguredAt", "source"] { dictionary.removeValue(forKey: key) }
         let restored = try JSONDecoder().decode(MoneyRecord.self, from: JSONSerialization.data(withJSONObject: dictionary))
         XCTAssertNil(restored.alertsEnabled)
         XCTAssertEqual(restored.id, stock.id)
-    }
-    @MainActor func testAlertPersistenceValidationAndRearming() async throws {
-        let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
-        defer { try? FileManager.default.removeItem(at: folder) }
-        let url = folder.appendingPathComponent("store.json")
-        let store = MoneyStore(url: url)
-        let stock = MoneyRecord(kind: .stock, name: "Eigene Aktie", symbol: "OWN")
-        try store.save(stock)
-        XCTAssertThrowsError(try store.setAlert(stock.id, target: 0, below: false, enabled: true))
-        XCTAssertNil(store.items(.stock).first?.alertsEnabled)
-        try store.setAlert(stock.id, target: 12_345_678, below: true, enabled: true)
-        try store.markAlert(stock.id, inside: true)
-        let restored = MoneyStore(url: url)
-        XCTAssertEqual(restored.items(.stock).first?.amount, 12_345_678)
-        XCTAssertEqual(restored.items(.stock).first?.alertBelow, true)
-        XCTAssertEqual(restored.items(.stock).first?.alertInside, true)
-        try restored.markAlert(stock.id, inside: false)
-        let quote = MoneyRecord(kind: .quote, name: "Kurs", amount: 12_345_678, date: Date().addingTimeInterval(1))
-        XCTAssertTrue(AlertRule.shouldNotify(try XCTUnwrap(restored.items(.stock).first), quote: quote))
-        try restored.setAlert(stock.id, target: 12_345_678, below: true, enabled: false)
-        XCTAssertFalse(AlertRule.shouldNotify(try XCTUnwrap(restored.items(.stock).first), quote: quote))
     }
     @MainActor func testInstallmentScheduleAndIdempotentPayment() async throws {
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)

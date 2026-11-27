@@ -25,9 +25,8 @@ final class LayoutTests: XCTestCase {
         attachment.lifetime = .keepAlways
         add(attachment)
         XCUIDevice.shared.orientation = .landscapeLeft
-        XCTAssertTrue(app.tabBars.buttons["Aktien"].isHittable)
-        app.tabBars.buttons["Aktien"].tap()
-        XCTAssertTrue(app.navigationBars["Aktien"].exists)
+        XCTAssertFalse(app.tabBars.buttons["Aktien"].exists)
+        app.tabBars.buttons["Finanzen"].tap()
         let landscapeFrame = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in app.frame.width > app.frame.height }, object: nil)
         XCTAssertEqual(XCTWaiter.wait(for: [landscapeFrame], timeout: 5), .completed)
         Thread.sleep(forTimeInterval: 1)
@@ -43,7 +42,7 @@ final class LayoutTests: XCTestCase {
         XCTAssertTrue(app.staticTexts[title].waitForExistence(timeout: 5))
     }
 
-    func testLongBudgetAndStockForms() throws {
+    func testLongBudgetForm() throws {
         let app = XCUIApplication()
         app.launchEnvironment["MOREMONEY_UI_TEST_STORE"] = "1"
         app.launchEnvironment["MOREMONEY_RESET_TEST_DATA"] = "1"
@@ -64,47 +63,6 @@ final class LayoutTests: XCTestCase {
         budget.name = "LargeText-Budget"
         budget.lifetime = .keepAlways
         add(budget)
-        app.tabBars.buttons["Aktien"].tap()
-        app.buttons["Aktie hinzufügen"].tap()
-        let stockName = app.textFields["record-name"].exists ? app.textFields["record-name"] : app.textViews["record-name"]
-        stockName.tap(); stockName.typeText("Persönliche langfristige Aktienbeobachtung")
-        if app.buttons["Fertig"].firstMatch.isHittable { app.buttons["Fertig"].firstMatch.tap() }
-        let symbol = app.textFields["Symbol"]
-        for _ in 0..<4 { if symbol.isHittable { break }; app.swipeUp() }
-        symbol.tap(); symbol.typeText("LONGSTOCK")
-        app.buttons["save-record"].tap()
-        XCTAssertTrue(app.staticTexts["Persönliche langfristige Aktienbeobachtung"].waitForExistence(timeout: 5))
-        Thread.sleep(forTimeInterval: 1)
-        let stocks = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
-        stocks.name = "LargeText-Stocks"
-        stocks.lifetime = .keepAlways
-        add(stocks)
-        app.staticTexts["Persönliche langfristige Aktienbeobachtung"].tap()
-        let alarm = app.buttons["Kursalarm einrichten"]
-        for _ in 0..<4 { if alarm.isHittable { break }; app.swipeUp() }
-        alarm.tap()
-        let target = app.textFields["alert-target"]
-        for _ in 0..<4 { if target.isHittable { break }; app.swipeUp() }
-        target.tap(); target.typeText("123,45")
-        Thread.sleep(forTimeInterval: 1)
-        let alertScreenshot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
-        alertScreenshot.name = "LargeText-AlertEditor"
-        alertScreenshot.lifetime = .keepAlways
-        add(alertScreenshot)
-        app.buttons["Abbrechen"].tap()
-        XCTAssertTrue(app.buttons["Kursalarm einrichten"].waitForExistence(timeout: 5))
-        app.buttons["Kursalarm einrichten"].tap()
-        let emptyTarget = app.textFields["alert-target"]
-        for _ in 0..<4 { if emptyTarget.isHittable { break }; app.swipeUp() }
-        XCTAssertEqual(emptyTarget.value as? String, "Zielkurs in EUR")
-        emptyTarget.tap(); emptyTarget.typeText("123,45")
-        app.buttons["Speichern"].tap()
-        XCTAssertTrue(app.buttons["Kursalarm einrichten"].waitForExistence(timeout: 5))
-        app.buttons["Kursalarm einrichten"].tap()
-        let restoredTarget = app.textFields["alert-target"]
-        for _ in 0..<4 { if restoredTarget.isHittable { break }; app.swipeUp() }
-        XCTAssertEqual(restoredTarget.value as? String, "123.45")
-        app.buttons["Abbrechen"].tap()
     }
     func testInstallmentFormWithLargeText() throws {
         let app = XCUIApplication()

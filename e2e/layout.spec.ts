@@ -32,13 +32,12 @@ test('kleine Displays, lange Namen, große Schrift und flache Dialoge',async({pa
   expect(budgetResponse.ok()).toBe(true);const data=await budgetResponse.json();
   const budget=data.budgets.find((b:{name:string})=>b.name===long);
   await request.post('/api/state',{data:{op:'item',budgetId:budget.id,name:long,plannedCents:1999999,quantity:10,category:long.slice(0,90)}});
-  await request.post('/api/stocks',{data:{op:'add',name:long,symbol:'LONGNAME',currency:'EUR',group:long.slice(0,60)}});
   for(const width of [320,375,390,430,768]){
     await page.setViewportSize({width,height:844});
     for(const scale of ['100%','150%','200%']){
       await page.goto('/#/dashboard');await expect(page.locator('h1')).toHaveText('Dashboard');
       await page.evaluate(value=>document.documentElement.style.fontSize=value,scale);
-      for(const route of ['dashboard','accounts','transactions','budgets','projects','goals','stocks','recurring','installments','simulator','settings','budgets/'+budget.id]){
+      for(const route of ['dashboard','accounts','transactions','budgets','projects','goals','worth','recurring','installments','simulator','settings','budgets/'+budget.id]){
         await page.evaluate(value=>{location.hash='#/'+value;},route);
         await expect(page.locator('main h1')).toBeVisible();
         await page.waitForTimeout(40);
@@ -52,6 +51,6 @@ test('kleine Displays, lange Namen, große Schrift und flache Dialoge',async({pa
   await page.getByRole('button',{name:'Speichern',exact:true}).scrollIntoViewIfNeeded();
   await expect(page.getByRole('button',{name:'Speichern',exact:true})).toBeInViewport();
   await page.getByRole('button',{name:'Abbrechen',exact:true}).click();
-  await page.setViewportSize({width:844,height:390});await page.goto('/#/stocks');await noTextOverflow(page);
+  await page.setViewportSize({width:844,height:390});await page.goto('/#/worth');await noTextOverflow(page);
   await page.screenshot({path:'test-results/layout-landscape.png',fullPage:true});
 });

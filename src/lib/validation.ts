@@ -6,6 +6,7 @@ const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(v => { const d=new D
 export const command = z.discriminatedUnion('op', [
   z.object({op:z.literal('account'), name:text, type:text, openingCents:z.number().int().min(-2_000_000_000).max(2_000_000_000)}),
   z.object({op:z.literal('archiveAccount'), id, archived:z.boolean()}),
+  z.object({op:z.literal('deleteAccount'), id, deleteBookings:z.boolean().default(false)}),
   z.object({op:z.literal('transaction'), requestId:id, title:text, amountCents:amount.positive(), kind:z.enum(['income','expense']), date, accountId:id, category:z.string().max(100).default(''), note:z.string().max(2000).default(''), budgetId:id.optional(), itemId:id.optional()}),
   z.object({op:z.literal('deleteTransaction'), id}),
   z.object({op:z.literal('transfer'), requestId:id, from:id, to:id, amountCents:amount.positive(), date}).refine(d=>d.from!==d.to,'Verschiedene Konten wählen'),
@@ -26,13 +27,14 @@ export const command = z.discriminatedUnion('op', [
   z.object({op:z.literal('toggleTask'), id, done:z.boolean()}),
   z.object({op:z.literal('deleteTask'), id}),
   z.object({op:z.literal('goal'), name:text, targetCents:amount.positive()}),
-  z.object({op:z.literal('contribute'), id, amountCents:amount.positive()}),
+  z.object({op:z.literal('contribute'), id, amountCents:amount.positive(), requestId:id.optional()}),
   z.object({op:z.literal('recurring'), name:text, amountCents:amount.positive(), interval:z.enum(['weekly','monthly','quarterly','halfyearly','yearly']), dueDate:date}),
   z.object({op:z.literal('deleteRecurring'), id}),
   z.object({op:z.literal('loan'),id,name:text,principalCents:amount.positive(),interestBps:z.number().int().min(0).max(10000),termMonths:z.number().int().min(1).max(600),firstDueDate:date}),
   z.object({op:z.literal('installment'),id,name:text,totalCents:amount.positive(),downPaymentCents:amount,rateCents:amount.positive(),firstDueDate:date}),
   z.object({op:z.literal('payInstallment'),id,index:z.number().int().min(0).max(600),accountId:id,date}),
   z.object({op:z.literal('deleteInstallment'),id}),
+  z.object({op:z.literal('privacy'),enabled:z.boolean()}),
   z.object({op:z.literal('settings'), theme:z.enum(['dark','light']), reserveCents:amount, widgets:z.string().max(200)}),
 ]);
 export function sameOrigin(request: Request) {

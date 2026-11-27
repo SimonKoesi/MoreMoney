@@ -14,19 +14,9 @@ targets:
     type: application
     platform: iOS
     sources: [Sources, Resources]
-    entitlements:
-      path: MoreMoney.entitlements
-      properties:
-        aps-environment: $(MOREMONEY_APNS_ENV)
-    info:
-      path: Info.plist
-      properties:
-        BGTaskSchedulerPermittedIdentifiers: [de.moremoney.quote-refresh]
-        UIBackgroundModes: [fetch]
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: de.moremoney.ios
-        MOREMONEY_APNS_ENV: development
         TARGETED_DEVICE_FAMILY: "1,2"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         GENERATE_INFOPLIST_FILE: YES

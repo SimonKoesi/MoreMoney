@@ -11,6 +11,9 @@ model Account {
   id           String   @id @default(uuid())
   name         String
   type         String   @default("Girokonto")
+  currency String @default("EUR")
+  includeInWorth Boolean @default(true)
+  maskedIban String @default("")
   openingCents Int      @default(0)
   archived     Boolean  @default(false)
   createdAt    DateTime @default(now())
@@ -19,12 +22,23 @@ model Account {
 }
 
 model Transaction {
+  financialRole String @default("unknown")
   id           String   @id @default(uuid())
   requestId    String   @unique
   title        String
   amountCents  Int
   kind         String
   date         String
+  bankExternalId String?
+  importBatchId String?
+  source String @default("manual")
+  bookingStatus String @default("booked")
+  currency String @default("EUR")
+  valueDate String @default("")
+  payee String @default("")
+  originalPurpose String @default("")
+  merchantLabel MerchantLabel?
+  tags String @default("")
   category     String   @default("")
   note         String   @default("")
   accountId    String
@@ -39,11 +53,40 @@ model Transaction {
   transferId   String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  @@unique([accountId, bankExternalId])
   @@index([date])
   @@unique([installmentId, installmentIndex])
 }
 
+model MerchantLabel {
+  id String @id @default(uuid())
+  transactionId String? @unique
+  transaction Transaction? @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  signature String? @unique
+  name String
+  logo String @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model DataQualitySnapshot {
+  id String @id @default(uuid())
+  day String @unique
+  version String
+  score Int?
+  coverage Int
+  createdAt DateTime @default(now())
+}
+
 model Budget {
+  mode String @default("purchase")
+  categoryScope String @default("")
+  period String @default("monthly")
+  startDate String @default("")
+  periodDays Int @default(30)
+  repeating Boolean @default(true)
+  rollover Boolean @default(false)
+  warningThresholds String @default("75,90,100")
   id           String   @id @default(uuid())
   name         String
   description  String   @default("")
@@ -126,6 +169,20 @@ model ProjectTask {
 }
 
 model SavingsGoal {
+  description String @default("")
+  category String @default("Individuell")
+  monthlyRateCents Int @default(0)
+  startDate String @default("")
+  targetDate String @default("")
+  priority Int @default(3)
+  accountId String?
+  currency String @default("EUR")
+  color String @default("#58d6bc")
+  icon String @default("target")
+  status String @default("active")
+  savingMode String @default("manual")
+  interestBps Int @default(0)
+  interval String @default("monthly")
   id           String   @id @default(uuid())
   name         String
   targetCents  Int
@@ -135,6 +192,9 @@ model SavingsGoal {
 }
 
 model RecurringPayment {
+  kind String @default("expense")
+  status String @default("active")
+  accountId String?
   id           String   @id @default(uuid())
   name         String
   amountCents  Int
@@ -145,7 +205,11 @@ model RecurringPayment {
 }
 
 model UserSettings {
+  navigation String @default("{}")
+  financePreferences String @default("{}")
   id           String   @id @default("local")
+  privacyMode Boolean @default(false)
+  inactivityMinutes Int @default(10)
   theme        String   @default("dark")
   reserveCents Int      @default(0)
   widgets      String   @default("balance,income,expense,planned")
@@ -196,4 +260,323 @@ model InstallmentPurchase {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   transactions Transaction[]
+}
+
+model Subscription {
+  id String @id @default(uuid())
+  name String
+  description String @default("")
+  icon String @default("repeat")
+  logo SubscriptionLogo?
+  category String @default("Sonstiges")
+  priceCents Int
+  currency String @default("EUR")
+  interval String @default("monthly")
+  customDays Int @default(30)
+  startDate String
+  minimumMonths Int @default(0)
+  nextCharge String
+  noticeDays Int @default(0)
+  earliestEnd String @default("")
+  endDate String @default("")
+  trialEnd String @default("")
+  autoRenew Boolean @default(true)
+  paymentMethod String @default("")
+  accountId String?
+  customerNumber String @default("")
+  contractNumber String @default("")
+  website String @default("")
+  cancelUrl String @default("")
+  note String @default("")
+  usage String @default("regular")
+  status String @default("active")
+  cancelledAt String @default("")
+  suggestionKey String? @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SubscriptionLogo {
+  id String @id @default(uuid())
+  subscriptionId String @unique
+  subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  png String
+  updatedAt DateTime @updatedAt
+}
+
+model SubscriptionHistory {
+  id String @id @default(uuid())
+  subscriptionId String
+  priceCents Int
+  currency String
+  status String
+  effectiveDate String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model RejectedSuggestion {
+  id String @id @default(uuid())
+  key String @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Asset {
+  id String @id @default(uuid())
+  name String
+  category String
+  purchaseCents Int @default(0)
+  currentValueCents Int
+  currency String @default("EUR")
+  purchaseDate String @default("")
+  quantityMicros String @default("1000000")
+  accountId String? @unique
+  watchStockId String?
+  valueDate String
+  source String @default("manual")
+  estimated Boolean @default(false)
+  archived Boolean @default(false)
+  note String @default("")
+  icon String @default("gem")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Liability {
+  id String @id @default(uuid())
+  name String
+  category String
+  originalCents Int
+  currentCents Int
+  currency String @default("EUR")
+  interestBps Int @default(0)
+  rateCents Int @default(0)
+  termMonths Int @default(0)
+  startDate String
+  creditor String @default("")
+  assetId String?
+  installmentId String? @unique
+  note String @default("")
+  archived Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model FxRate {
+  id String @id @default(uuid())
+  currency String
+  rateMicros String
+  asOf String
+  source String @default("manual")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([currency, asOf])
+}
+
+model WorthSnapshot {
+  id String @id @default(uuid())
+  eventKey String @unique
+  day String
+  assetsCents String
+  liabilitiesCents String
+  liquidCents String
+  netCents String
+  allocations String
+  excludedCurrencies String
+  reason String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ImportBatch {
+  id String @id @default(uuid())
+  accountId String
+  filename String
+  fileHash String
+  status String @default("applied")
+  rowCount Int @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ImportChange {
+  id String @id @default(uuid())
+  batchId String
+  transactionId String
+  action String
+  before String
+  afterHash String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CategoryRule {
+  financialRole String @default("unknown")
+  id String @id @default(uuid())
+  name String
+  match String
+  category String
+  subcategory String @default("")
+  minimumCents Int?
+  maximumCents Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Document {
+  id String @id @default(uuid())
+  ownerType String
+  ownerId String
+  name String
+  mime String
+  size Int
+  sha256 String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model FinanceGoal {
+  id String @id @default(uuid())
+  name String
+  targetCents Int
+  targetDate String @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PrivacyConsent {
+  id String @id @default(uuid())
+  purpose String @unique
+  granted Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AuditEvent {
+  id String @id @default(uuid())
+  event String
+  outcome String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model GoalMovement {
+  id String @id @default(uuid())
+  goalId String
+  amountCents Int
+  day String
+  kind String
+  note String @default("")
+  requestId String @unique
+  fundingTransactionId String?
+  previous String @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TransactionSplit {
+  id String @id @default(uuid())
+  transactionId String
+  category String
+  amountCents Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MonthCoverage {
+  id String @id @default(uuid())
+  month String @unique
+  incomeComplete Boolean @default(false)
+  expensesComplete Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model DataQualityConfig {
+  id String @id @default(uuid())
+  accountsComplete Boolean @default(false)
+  debtsComplete Boolean @default(false)
+  obligationsComplete Boolean @default(false)
+  incomeReviewed Boolean @default(false)
+  savingsReviewed Boolean @default(false)
+  longTermReviewed Boolean @default(false)
+  essentialCategories String @default("[]")
+  highInterestBps Int @default(1000)
+  targetReserveMonths Int @default(6)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model HealthSnapshot {
+  id String @id @default(uuid())
+  eventKey String @unique
+  day String
+  version String
+  score Int?
+  exactScore String
+  coverage String
+  inputs String
+  details String
+  reason String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model FinanceInsight {
+  id String @id @default(uuid())
+  key String @unique
+  category String
+  title String
+  description String
+  impactCents Int @default(0)
+  priority Int
+  quality String
+  sourceIds String
+  periodStart String
+  periodEnd String
+  route String
+  read Boolean @default(false)
+  archived Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SavedFilter {
+  id String @id @default(uuid())
+  name String
+  filters String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ChatMessage {
+  id String @id @default(uuid())
+  threadId String
+  role String
+  content String
+  components String
+  sourceIds String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model FinanceReport {
+  id String @id @default(uuid())
+  kind String
+  periodStart String
+  periodEnd String
+  content String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CategoryConfig {
+  id String @id @default(uuid())
+  name String @unique
+  color String @default("#58d6bc")
+  icon String @default("tag")
+  necessary Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

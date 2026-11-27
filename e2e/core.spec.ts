@@ -1,11 +1,12 @@
 import { test, expect } from '@playwright/test';
 import sharp from 'sharp';
-test('persistenter Finanzablauf, Bilder, Teilzahlungen und unabhängige Checkliste',async({page,request})=>{
+test('persistente Einkaufsliste, Bilder und Teilzahlungen',async({page,request})=>{
   await page.goto('/');
   await expect(page).toHaveTitle(/MoreMoney/);
   await expect(page.locator('.sidebar .brand')).toContainText('MoreMoney');
   await expect(page.locator('.sidebar .brand-icon')).toHaveJSProperty('naturalWidth',1254);
-  await page.getByRole('button',{name:'Konto anlegen',exact:true}).first().click();
+  await page.getByRole('navigation',{name:'Hauptnavigation'}).getByRole('button',{name:'Konten',exact:true}).click();
+  await page.getByRole('button',{name:'Konto hinzufügen',exact:true}).click();
   await page.getByLabel('Name',{exact:true}).fill('Testkonto');
   await page.getByLabel('Anfangsbestand in EUR').fill('2000');
   await page.getByRole('button',{name:'Speichern',exact:true}).click();
@@ -18,24 +19,27 @@ test('persistenter Finanzablauf, Bilder, Teilzahlungen und unabhängige Checklis
   await page.getByRole('button',{name:'Position hinzufügen',exact:true}).click();
   await page.getByLabel('Name',{exact:true}).fill('Sofa');await page.getByLabel('Geplanter Einzelpreis in EUR').fill('1000');
   await page.getByRole('button',{name:'Speichern',exact:true}).click();await expect(page.getByRole('dialog')).toHaveCount(0);
-  await page.getByLabel('Sofa',{exact:true}).check();
-  await expect.poll(async()=>{const d=await(await request.get('/api/state')).json();return d.budgets[0].items[0].done;}).toBe(true);
-  let data=await(await request.get('/api/state')).json();expect(data.transactions).toHaveLength(0);
+  let data=await(await request.get('/api/state')).json();
+  const shoppingItemId=data.budgets.find((budget:{name:string})=>budget.name==='Wohnung').items[0].id;
+  const testAccountId=data.accounts.find((account:{name:string})=>account.name==='Testkonto').id;
+  const shoppingPayments=()=>data.transactions.filter((row:{itemId:string|null})=>row.itemId===shoppingItemId);
+  expect(shoppingPayments()).toHaveLength(0);
   for(const amount of ['200','800']){
     await page.getByRole('button',{name:'Zahlung erfassen',exact:true}).click();await page.getByLabel('Betrag in EUR',{exact:true}).fill(amount);
     await page.getByRole('button',{name:'Weiter',exact:true}).click();
     await page.getByRole('button',{name:'Zurück',exact:true}).click();
     await expect(page.getByLabel('Betrag in EUR',{exact:true})).toHaveValue(amount);
     await page.getByRole('button',{name:'Weiter',exact:true}).click();
+    await page.getByRole('combobox',{name:'Konto',exact:true}).selectOption(testAccountId);
     await page.getByRole('button',{name:'Speichern',exact:true}).click();await expect(page.getByRole('dialog')).toHaveCount(0);
   }
-  data=await(await request.get('/api/state')).json();expect(data.transactions).toHaveLength(2);expect(data.transactions.reduce((s:number,t:{amountCents:number})=>s+t.amountCents,0)).toBe(100000);
+  data=await(await request.get('/api/state')).json();expect(shoppingPayments()).toHaveLength(2);expect(shoppingPayments().reduce((s:number,t:{amountCents:number})=>s+t.amountCents,0)).toBe(100000);
   await page.getByRole('tab',{name:'Galerie',exact:true}).click();
   await page.locator('.item-actions summary').click();
   await page.locator('input[type=file]').setInputFiles({name:'test.png',mimeType:'image/png',buffer:await sharp({create:{width:100,height:80,channels:3,background:'#68ddc1'}}).png().toBuffer()});
   await expect(page.locator('.product-images img')).toHaveCount(1);
   await page.reload();await expect(page.locator('h1')).toHaveText('Wohnung');
-  await expect(page.getByLabel('Sofa',{exact:true})).toBeChecked();
+  await expect(page.getByText(/Gekauft/)).toBeVisible();
   await page.setViewportSize({width:390,height:844});await expect(page.locator('h1')).toHaveText('Wohnung');
   await expect(page.locator('body')).toHaveJSProperty('scrollWidth',390);
   await page.screenshot({path:'test-results/mobile.png',fullPage:true});
@@ -68,7 +72,7 @@ test('Bausteine: Stepper, Radiogruppe, Tabs, Dock und reduzierte Bewegung',async
   await expect(page.getByRole('tab',{name:'Galerie',exact:true})).toHaveAttribute('aria-selected','true');
   await expect(page.getByRole('tabpanel')).toBeVisible();
   await page.keyboard.press('End');
-  await expect(page.getByRole('tab',{name:'Kanban',exact:true})).toHaveAttribute('aria-selected','true');
+  await expect(page.getByRole('tab',{name:'Galerie',exact:true})).toHaveAttribute('aria-selected','true');
   await page.goto('/#/dashboard');
   await page.setViewportSize({width:390,height:844});
   const dock=page.getByRole('navigation',{name:'Schnellnavigation'});
@@ -82,53 +86,34 @@ test('Bausteine: Stepper, Radiogruppe, Tabs, Dock und reduzierte Bewegung',async
 });
 
 test('API: Idempotenz, Transfers, Zugriffsschutz und vollständiges Bildbackup',async({request})=>{
-  let d=await(await request.get('/api/state')).json();const accountId=d.accounts[0].id;
+  let d=await(await request.get('/api/state')).json();const accountId=d.accounts.find((a:{name:string})=>a.name==='Testkonto').id;
   const payload={op:'transaction',requestId:crypto.randomUUID(),title:'Wiederholungstest',amountCents:123,kind:'expense',date:'2026-11-22',accountId};
   expect((await request.post('/api/state',{data:payload})).ok()).toBeTruthy();
   expect((await request.post('/api/state',{data:payload})).ok()).toBeTruthy();
   d=await(await request.get('/api/state')).json();expect(d.transactions.filter((t:{requestId:string})=>t.requestId===payload.requestId)).toHaveLength(1);
   await request.post('/api/state',{data:{op:'account',name:'Sparkonto',type:'Sparkonto',openingCents:0}});
   d=await(await request.get('/api/state')).json();
-  const transfer={op:'transfer',requestId:crypto.randomUUID(),from:accountId,to:d.accounts[1].id,amountCents:500,date:'2026-11-22'};
+  const transfer={op:'transfer',requestId:crypto.randomUUID(),from:accountId,to:d.accounts.find((a:{name:string})=>a.name==='Sparkonto').id,amountCents:500,date:'2026-11-22'};
   expect((await request.post('/api/state',{data:transfer})).ok()).toBeTruthy();await request.post('/api/state',{data:transfer});
   d=await(await request.get('/api/state')).json();const sides=d.transactions.filter((t:{transferId:string})=>t.transferId===transfer.requestId);expect(sides).toHaveLength(2);expect(sides.map((s:{kind:string})=>s.kind).sort()).toEqual(['transfer-in','transfer-out']);
   expect((await request.post('/api/state',{headers:{origin:'https://fremd.example'},data:payload})).status()).toBe(403);
   const item=d.budgets[0].items[0];
-  expect((await request.post('/api/state',{data:{op:'deleteItem',id:item.id}})).ok()).toBe(false);
   expect((await request.post('/api/images',{multipart:{itemId:item.id,image:{name:'fake.png',mimeType:'image/png',buffer:Buffer.from('kein Bild')}}})).ok()).toBe(false);
-  const backup=await(await request.get('/api/export')).json();expect(backup.version).toBe(1);expect(Object.keys(backup.images)).toHaveLength(1);
+  const backup=await(await request.get('/api/export')).json();expect(backup.version).toBe(3);expect(Object.keys(backup.images)).toHaveLength(1);
+  const paidIds=d.transactions.filter((row:{itemId:string|null})=>row.itemId===item.id).map((row:{id:string})=>row.id);
+  expect(paidIds).toHaveLength(2);
+  const deletion=await request.post('/api/state',{data:{op:'deleteItem',id:item.id}});
+  expect(deletion.ok()).toBeTruthy();
+  d=await deletion.json();
+  expect(d.budgets[0].items).toHaveLength(0);
+  expect(d.transactions.filter((row:{id:string;itemId:string|null})=>paidIds.includes(row.id)&&row.itemId===null)).toHaveLength(2);
 });
 
-test('individuelle Aktien-Watchlist bleibt vom Haushaltsbuch getrennt',async({page,request})=>{
-  const before=await(await request.get('/api/state')).json();
-  await page.goto('/#/stocks');await expect(page.locator('h1')).toHaveText('Aktien-Watchlist');
-  await page.getByRole('button',{name:'Aktie hinzufügen',exact:true}).click();
-  await page.getByLabel('Name',{exact:true}).fill('Apple');await page.getByLabel('Symbol',{exact:true}).fill('aapl');
-  await page.getByRole('combobox',{name:'Währung',exact:true}).selectOption('USD');
-  await page.getByLabel('Gruppe · optional').fill('Technologie');
-  await page.getByLabel('Notiz · optional').fill('Für langfristige Beobachtung');
-  await page.getByLabel('Zielkurs · optional').fill('150');
-  await page.getByRole('button',{name:'Speichern',exact:true}).click();await expect(page.getByRole('dialog')).toHaveCount(0);
-  await page.getByRole('button',{name:'Apple als Favorit',exact:true}).click();
-  await expect(page.getByRole('button',{name:'Apple als Favorit',exact:true})).toHaveAttribute('aria-pressed','true');
-  await page.getByRole('radio',{name:'Favoriten',exact:true}).check();await expect(page.getByRole('button',{name:'Apple',exact:true})).toBeVisible();
-  for(const [price,day] of [['120','2026-11-20'],['130','2026-11-21']]){
-    await page.getByRole('button',{name:'Kurs erfassen',exact:true}).click();await page.getByLabel('Kurs in USD').fill(price);await page.getByLabel('Handelstag',{exact:true}).fill(day);
-    await page.getByRole('button',{name:'Speichern',exact:true}).click();await expect(page.getByRole('dialog')).toHaveCount(0);
-  }
-  await expect(page.getByText('+8,33%',{exact:true})).toBeVisible();await expect(page.getByText('Erreicht',{exact:true})).toBeVisible();
-  await page.getByRole('button',{name:'Verlauf',exact:true}).click();await expect(page.getByRole('img',{name:/Gespeicherter Kursverlauf/})).toBeVisible();
-  await expect(page.getByText('Für langfristige Beobachtung',{exact:true})).toBeVisible();
-  await page.reload();await expect(page.getByRole('button',{name:'Apple',exact:true})).toBeVisible();
-  let after=await(await request.get('/api/state')).json();const stock=after.stocks[0];
-  expect(stock.favorite).toBe(true);expect(stock.quotes).toHaveLength(2);expect(stock.currency).toBe('USD');
-  const edit={op:'edit',id:stock.id,name:stock.name,symbol:stock.symbol,exchange:stock.exchange,currency:'EUR',note:stock.note,group:stock.group,target:'150',targetDirection:'below'};
-  expect((await request.post('/api/stocks',{data:edit})).ok()).toBe(false);
-  const sameDay={op:'quote',id:stock.id,price:'130.000001',asOf:'2026-11-21'};
-  expect((await request.post('/api/stocks',{data:sameDay})).ok()).toBe(true);await request.post('/api/stocks',{data:sameDay});
-  after=await(await request.get('/api/state')).json();expect(after.stocks[0].quotes).toHaveLength(2);expect(after.stocks[0].quotes[1].priceMicros).toBe('130000001');
-  expect(after.transactions).toEqual(before.transactions);expect(after.accounts).toEqual(before.accounts);
-  const backup=await(await request.get('/api/export')).json();expect(backup.data.stocks).toHaveLength(1);
-  await page.setViewportSize({width:390,height:844});await expect(page.locator('body')).toHaveJSProperty('scrollWidth',390);
-  await page.screenshot({path:'test-results/watchlist-mobile.png',fullPage:true});
+test('Frühere Aktien bleiben im Backup und der alte Einstieg führt zum Dashboard',async({page,request})=>{
+  await page.goto('/#/stocks');
+  await expect(page.locator('h1')).toHaveText('Dashboard');
+  await expect(page.getByRole('button',{name:'Aktien-Watchlist'})).toHaveCount(0);
+  const backup=await(await request.get('/api/export')).json();
+  expect(backup.tables.WatchStock).toEqual(expect.any(Array));
+  expect(backup.tables.StockQuote).toEqual(expect.any(Array));
 });

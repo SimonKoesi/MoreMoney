@@ -23,9 +23,14 @@ build/*.xcresult/
 *.ipa
 *.mobileprovision
 *.p12
+*.p8
+*.pem
+*.key
 
 platforms/ios/Info.plist
 
 build/loan-mobile.png
 build/ios-review/
 build/ios-artifacts/
+
+/test-results-browser-cache/

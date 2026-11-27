@@ -1,5 +1,12 @@
 const fs=require('node:fs');const path=require('node:path');
 const base=path.resolve(__dirname,'..'), target=path.join(base,'desktop-server');
+const previousNext=path.join(target,'.next');
+if(fs.existsSync(previousNext)){
+  const expected=path.join(fs.realpathSync(base),'desktop-server','.next');
+  const resolved=fs.realpathSync(previousNext);
+  if(resolved!==expected)throw new Error('Unerwarteter Pfad für die generierten Desktop-Dateien.');
+  fs.rmSync(resolved,{recursive:true,force:true});
+}
 fs.mkdirSync(target,{recursive:true});
 fs.cpSync(path.join(base,'.next/standalone'),target,{recursive:true});
 fs.mkdirSync(path.join(target,'.next'),{recursive:true});

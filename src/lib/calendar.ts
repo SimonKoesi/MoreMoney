@@ -1,0 +1,4 @@
+export const berlinDay=(date=new Date())=>new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Berlin',year:'numeric',month:'2-digit',day:'2-digit'}).format(date);
+export function validDay(value:string){const d=new Date(value+'T12:00:00Z');return /^\d{4}-\d{2}-\d{2}$/.test(value)&&!isNaN(+d)&&d.toISOString().slice(0,10)===value;}
+export function addDays(day:string,n:number){const d=new Date(day+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10);}
+export function addMonths(day:string,n:number){const origin=new Date(day+'T12:00:00Z');const d=new Date(Date.UTC(origin.getUTCFullYear(),origin.getUTCMonth()+n,1,12));const last=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+1,0)).getUTCDate();d.setUTCDate(Math.min(origin.getUTCDate(),last));return d.toISOString().slice(0,10);}

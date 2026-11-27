@@ -45,26 +45,6 @@ test('Ratenplan, Abbruch, Zahlung, Wiederholung und Wiederöffnung',async({page,
  expect(await page.evaluate(()=>document.body.scrollWidth<=innerWidth)).toBe(true);
 });
 
-test('ETF-Vorschläge füllen Symbol, Börse und Währung; Suchfehler erhält Eingabe',async({page})=>{
- await page.route('**/api/stocks/search?*',async route=>{
-  const query=new URL(route.request().url()).searchParams.get('q');
-  if(query==='Fehler')return route.fulfill({status:502,json:{error:'Suche nicht verfügbar'}});
-  return route.fulfill({json:{results:[{name:'Persönlicher Welt ETF',symbol:'OWNETF',exchange:'XETRA',currency:'EUR',type:'ETF'}]}});
- });
- await page.goto('/#/stocks');
- await page.getByRole('button',{name:'Aktie hinzufügen',exact:true}).click();
- await page.getByLabel('Name',{exact:true}).fill('Fehler');
- await expect(page.getByRole('status')).toHaveText('Suche nicht verfügbar');
- await expect(page.getByLabel('Name',{exact:true})).toHaveValue('Fehler');
- await page.getByLabel('Name',{exact:true}).fill('Welt');
- await page.getByRole('button',{name:/Persönlicher Welt ETF/}).click();
- await expect(page.getByLabel('Symbol',{exact:true})).toHaveValue('OWNETF');
- await expect(page.getByLabel('Börse · optional')).toHaveValue('XETRA');
- await page.getByRole('button',{name:'Speichern',exact:true}).click();
- await expect(page.getByRole('dialog')).toHaveCount(0);
- await expect(page.getByRole('button',{name:'Persönlicher Welt ETF',exact:true})).toBeVisible();
-});
-
 test('Darlehen: Sollzins, Zinsanteil, Rückzahlung und Persistenz',async({page,request})=>{
  await page.goto('/#/installments');
  await page.getByRole('button',{name:'Finanzierung hinzufügen'}).click();

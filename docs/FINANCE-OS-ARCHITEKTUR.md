@@ -13,3 +13,19 @@ Sicherheit: lokale Einzelbenutzer-Anwendung, keine öffentlich gehostete Mehrben
 Vor neuen Schemaänderungen: konsistente SQLite-Sicherung mit VACUUM INTO; eine fehlgeschlagene Sicherung verhindert Migration. Rücksetzung offline nach App-Schließung aus gesicherter Datei, nie laufende Datenbank überschreiben. Bestehende Daten werden nicht automatisch gelöscht. Vollständige Datenlöschung nur durch eigenen bestätigten Ablauf.
 
 Rechtlich/organisatorisch offen: Verantwortlicher, konkrete Rechtsgrundlagen, Speicher-/Backupfristen, Auftragsverarbeitervereinbarungen, Anbieter-Lizenz/PSD2-Rolle, Zustell-/Kündigungsregeln. Passkeys, geräteübergreifende Abmeldung und Cloud-Sync benötigen jeweils passende Plattform-/Serverarchitektur und dürfen nicht als verfügbar vorgetäuscht werden.
+
+## Datenstruktur und Betrieb
+
+| Datenbereich | Tabellen und Beziehungen |
+| --- | --- |
+| Verträge | `Subscription` mit verknüpftem Konto, `SubscriptionHistory` für Änderungen und `RejectedSuggestion` für verworfene Vorschläge. |
+| Vermögen | `Asset`, `Liability`, `FxRate`, `WorthSnapshot` und `FinanceGoal`. Konten und bestehende Kreditpläne liefern gemeinsame Grundwerte. |
+| Bankdateien | `ImportBatch` und `ImportChange` speichern Vorgänge und Rücknahmeinformationen. Importierte Buchungen nutzen `Transaction`; `CategoryRule` enthält Klassifizierungsregeln. |
+| Datenschutz | `PrivacyConsent`, `AuditEvent` und `Document`. Die lokalen Sitzungs- und MFA-Daten liegen außerhalb der SQLite-Tabellen in `security.enc`. |
+| Analyse | `GoalMovement`, `TransactionSplit`, `MonthCoverage`, `DataQualityConfig` und `HealthSnapshot`. Weitere Tabellen für Insights, Filter, Nachrichten und Berichte sind als Schema vorbereitet. Ihre Existenz belegt keine verfügbare Oberfläche. |
+
+Das vollständige Modell und die versionierten Änderungen stehen in [schema.prisma](../prisma/schema.prisma), [Migration 006](../prisma/migrations/006_finance_os/migration.sql) und [Migration 007](../prisma/migrations/007_analysis_intelligence/migration.sql).
+
+Die installierte Windows-App setzt ihre lokalen Serverwerte selbst. Bei isolierter Entwicklung und Tests steuern `FINOVA_DATA_DIR` und `DATABASE_URL` den Datenordner und die SQLite-Datei. `FINOVA_MASTER_KEY` und `FINOVA_SESSION_TOKEN` übergibt Electron intern für Verschlüsselung und Loopback-Zugriff. Ein separat gestarteter Entwicklungsserver mit lokal abgelegter `development.key` hat nicht den Windows-Schlüsselbundschutz des Electron-Pakets. `MOREMONEY_TWELVE_DATA_KEY` ist eine optionale serverseitige Einstellung für Kursdaten. Die Nutzung setzt zusätzlich die Einwilligung in der App voraus.
+
+In **Bankkonten** ein Konto auswählen, eine CSV-, CAMT.053-, MT940- oder OFX-Datei laden und Vorschau sowie Zuordnung prüfen. Erst mit der Importbestätigung werden Buchungen geschrieben. Der Importverlauf bietet die Rücknahme einzelner Vorgänge. Für diesen Ablauf sind keine Zugangsdaten erforderlich. Der externe Bankstatus lautet **Nicht konfiguriert**. Die App enthält derzeit keine Produktionskonfiguration für Live-Banking oder KI.

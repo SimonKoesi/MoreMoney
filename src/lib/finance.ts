@@ -7,7 +7,7 @@ export function cents(value: string): number {
   if (!Number.isSafeInteger(result) || result > 2_000_000_000) throw new Error('Betrag zu groß.');
   return negative ? -result : result;
 }
-export const money = (value: number) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(value / 100);
+export const money = (value: number, currency = 'EUR') => new Intl.NumberFormat('de-DE', { style: 'currency', currency }).format(value / 100);
 export type Payment = { amountCents: number; kind: string; accountId: string; date: string; itemId?: string | null; budgetId?: string | null };
 export function balance(opening: number, payments: Payment[]) {
   return payments.reduce((sum, p) => sum + (['income', 'transfer-in'].includes(p.kind) ? p.amountCents : -p.amountCents), opening);

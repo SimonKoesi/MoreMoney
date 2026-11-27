@@ -1,6 +1,5 @@
 import {describe,it,expect} from 'vitest';
 import {installmentSchedule,loanSchedule} from '@/lib/installments';
-import {parseSuggestions} from '@/lib/stocks';
 describe('Ratenkäufe',()=>{
  it('erhält Centbeträge und Monatsletzte ohne Datumsdrift',()=>{
   const rows=installmentSchedule({totalCents:100001,downPaymentCents:10000,rateCents:30000,firstDueDate:'2026-01-31'});
@@ -13,13 +12,6 @@ describe('Ratenkäufe',()=>{
   for(const change of [{rateCents:0},{downPaymentCents:100000},{downPaymentCents:-1},{rateCents:1},{firstDueDate:'2026-02-30'},{totalCents:0}])expect(()=>installmentSchedule({...base,...change})).toThrow();
  });
 });
-it('erkennt Aktien und ETFs und entfernt Duplikate und unpassende Währungen',()=>{
- const item={symbol:'OWN',instrument_name:'Eigener ETF',exchange:'XETRA',currency:'EUR',instrument_type:'ETF'};
- const results=parseSuggestions({data:[item,item,{...item,symbol:'STOCK',instrument_type:'Common Stock'},{...item,symbol:'FX',instrument_type:'Forex'},{...item,currency:'JPY'}]});
- expect(results).toHaveLength(2);expect(results[0].type).toBe('ETF');expect(results[0].name).toBe('Eigener ETF');
- expect(()=>parseSuggestions({status:'error'})).toThrow();
-});
-
 it('berechnet Zinsen und Tilgung centgenau bis zur vollständigen Rückzahlung',()=>{
  const rows=loanSchedule(100000,1200,2,'2026-01-31');
  expect(rows.map(r=>r.amountCents)).toEqual([50751,50751]);
